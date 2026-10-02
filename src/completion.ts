@@ -27,7 +27,7 @@ function documentation(item: Convention, badgeUrl: string): vscode.MarkdownStrin
 /**
  * Label picker inside comment input boxes:
  * - no prefix yet: offer labels at the start of the comment (also after `/`);
- * - cursor inside an existing prefix: offer decorations, other labels and removal.
+ * - cursor right after an existing prefix: offer decorations, other labels and removal.
  */
 export class ConventionalCommentsCompletionProvider
   implements vscode.CompletionItemProvider
@@ -47,7 +47,9 @@ export class ConventionalCommentsCompletionProvider
     }
     const triggeredBySlash =
       context.triggerKind === vscode.CompletionTriggerKind.TriggerCharacter;
-    if (offset > existing.length || triggeredBySlash) {
+    // Only right after the label: anything typed to filter the list then lands
+    // after it, so the precomputed prefix edits stay valid.
+    if (offset !== existing.length || triggeredBySlash) {
       return undefined;
     }
     return this.prefixReplacements(doc, existing.label, existing.decorations, position);
@@ -108,7 +110,9 @@ export class ConventionalCommentsCompletionProvider
       item.filterText = name;
       item.sortText = sort;
       if (edit) {
-        const range = new vscode.Range(doc.positionAt(0), doc.positionAt(edit.end));
+        // Never reach past the cursor, where typed filter text goes.
+        const end = Math.min(edit.end, doc.offsetAt(position));
+        const range = new vscode.Range(doc.positionAt(0), doc.positionAt(end));
         item.additionalTextEdits = [vscode.TextEdit.replace(range, edit.text)];
       }
       items.push(item);
