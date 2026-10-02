@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import { parsePrefix } from "./conventions";
-import { getTargetDocument, onDidChangeTarget } from "./target";
+import { COMMENT_SCHEME, getTargetDocument, onDidChangeTarget } from "./target";
 
 // Tracks whether each comment uses the badge or plain text format, and exposes
 // the focused comment's format as a context key for the header toggle icon.
@@ -33,6 +33,13 @@ export function registerFormatState(): vscode.Disposable[] {
   updateContext();
   return [
     onDidChangeTarget(updateContext),
+    // Remember the format of a label however it was written (picker, suggestion,
+    // header button or by hand), so the next label uses the same one.
+    vscode.workspace.onDidChangeTextDocument(({ document }) => {
+      if (document.uri.scheme !== COMMENT_SCHEME) return;
+      const prefix = parsePrefix(document.getText());
+      if (prefix) prettifiedByUri.set(document.uri.toString(), prefix.prettified);
+    }),
     vscode.workspace.onDidCloseTextDocument((doc) => prettifiedByUri.delete(doc.uri.toString())),
     vscode.workspace.onDidChangeConfiguration((e) => {
       if (e.affectsConfiguration("conventionalComments.prettify")) updateContext();
