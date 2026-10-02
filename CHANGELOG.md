@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.5.0
+
+- **Breaking:** the `conventionalComments.prettify` setting (true/false) is now `conventionalComments.defaultFormat` (`badge`/`plain`). If you had set `prettify` to `false`, set `defaultFormat` to `plain`.
+- Internal clean-up, no behaviour changes:
+  - one `Format` type instead of a true/false flag
+  - edit helpers named after what they return
+  - target lookup without side effects
+  - completion items built by small functions
+  - picker items unit-tested
+  - shared integration test helpers
+
 ## 0.4.2
 
 - Fix: typing to filter the label suggestions could garble the label. Label edits are now only suggested with the cursor right after the label.

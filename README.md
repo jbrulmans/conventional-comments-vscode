@@ -33,7 +33,7 @@ Type `/` at the start of a comment to pick a label right in the box. The decorat
 
 ### Badge or plain text
 
-The second header button shows the comment's format: a tag icon for a badge, a text icon for plain text. Click it to switch. The default format comes from the `conventionalComments.prettify` setting.
+The second header button shows the comment's format: a tag icon for a badge, a text icon for plain text. Click it to switch. New labels use the `conventionalComments.defaultFormat` setting.
 
 Plain text, exactly as in the spec:
 
@@ -88,7 +88,7 @@ The pickers set one decoration. Several comma-separated ones written by hand, li
 
 | Setting | Default | Description |
 |---|---|---|
-| `conventionalComments.prettify` | `true` | Use badges instead of plain text by default. Existing labels keep their format. |
+| `conventionalComments.defaultFormat` | `badge` | How new labels are written: `badge` or `plain`. Existing labels keep their format. |
 | `conventionalComments.showHeaderButtons` | `true` | Show the + and format buttons in comment thread headers. |
 
 ## Development
