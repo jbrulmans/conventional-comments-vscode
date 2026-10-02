@@ -1,68 +1,24 @@
 import { strict as assert } from "node:assert";
 import * as vscode from "vscode";
 import { LABELS, buildPrefix } from "../../conventions";
-
-// Comment widget inputs are `comment:` documents. VS Code core provides their
-// content, so tests can open one in a regular editor and drive the commands.
-
-let counter = 0;
-
-async function openComment(text = ""): Promise<vscode.TextEditor> {
-  const uri = vscode.Uri.parse(`comment://test/commentinput-${++counter}.md`);
-  const doc = await vscode.workspace.openTextDocument(uri);
-  const editor = await vscode.window.showTextDocument(doc);
-  if (text) {
-    // Opened in a regular editor these documents are read-only for
-    // `TextEditor.edit`, but workspace edits apply (as the extension does).
-    const edit = new vscode.WorkspaceEdit();
-    edit.insert(uri, new vscode.Position(0, 0), text);
-    await vscode.workspace.applyEdit(edit);
-  }
-  return editor;
-}
-
-const labelOf = (i: vscode.CompletionItem) => (typeof i.label === "string" ? i.label : i.label.label);
-
-async function completions(
-  editor: vscode.TextEditor,
-  position: vscode.Position,
-  trigger?: string
-): Promise<vscode.CompletionItem[]> {
-  const list = await vscode.commands.executeCommand<vscode.CompletionList>(
-    "vscode.executeCompletionItemProvider",
-    editor.document.uri,
-    position,
-    trigger
-  );
-  return list.items;
-}
-
-/** Applies an item's edits like the suggest widget does (without its UI). */
-async function accept(editor: vscode.TextEditor, item: vscode.CompletionItem | undefined): Promise<void> {
-  assert.ok(item, "completion item not found");
-  assert.equal(item.command, undefined, "prefix items must not depend on commands");
-  const edit = new vscode.WorkspaceEdit();
-  edit.set(editor.document.uri, item.additionalTextEdits ?? []);
-  await vscode.workspace.applyEdit(edit);
-}
-
-const run = (command: string) => vscode.commands.executeCommand(command);
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+import {
+  acceptEdits,
+  activateExtension,
+  completions,
+  labelOf,
+  openComment,
+  run,
+  setDefaultFormat,
+  waitForWidget,
+} from "./helpers";
 
 describe("Conventional Comments", () => {
   before(async () => {
-    const ext = vscode.extensions.getExtension("jbrulmans.conventional-comments-vscode");
-    await ext!.activate();
-    await vscode.workspace
-      .getConfiguration("conventionalComments")
-      .update("prettify", false, vscode.ConfigurationTarget.Global);
+    await activateExtension();
+    await setDefaultFormat("plain");
   });
 
-  after(async () => {
-    await vscode.workspace
-      .getConfiguration("conventionalComments")
-      .update("prettify", undefined, vscode.ConfigurationTarget.Global);
-  });
+  after(() => setDefaultFormat(undefined));
 
   it("is a comment: document opened by VS Code core", async () => {
     const editor = await openComment();
@@ -111,16 +67,16 @@ describe("Conventional Comments", () => {
     };
     const find = async (label: string) => (await at()).find((i) => labelOf(i) === label);
 
-    await accept(editor, await find("(non-blocking)"));
+    await acceptEdits(editor, await find("(non-blocking)"));
     assert.equal(editor.document.getText(), "suggestion (non-blocking): use a map");
 
-    await accept(editor, await find("(if-minor)"));
+    await acceptEdits(editor, await find("(if-minor)"));
     assert.equal(editor.document.getText(), "suggestion (if-minor): use a map");
 
-    await accept(editor, await find("issue"));
+    await acceptEdits(editor, await find("issue"));
     assert.equal(editor.document.getText(), "issue (if-minor): use a map");
 
-    await accept(editor, await find("remove (if-minor)"));
+    await acceptEdits(editor, await find("remove (if-minor)"));
     assert.equal(editor.document.getText(), "issue: use a map");
   });
 
@@ -129,7 +85,7 @@ describe("Conventional Comments", () => {
     await run("conventionalComments.header.plain");
     assert.equal(
       editor.document.getText(),
-      buildPrefix("thought", ["non-blocking"], true) + "later"
+      buildPrefix("thought", ["non-blocking"], "badge") + "later"
     );
     await run("conventionalComments.header.badge");
     assert.equal(editor.document.getText(), "thought (non-blocking): later");
@@ -137,16 +93,16 @@ describe("Conventional Comments", () => {
 
   it("inserts a label and decoration through the picker", async () => {
     const editor = await openComment("use a map here");
-    const picking = vscode.commands.executeCommand("conventionalComments.insertLabel");
+    const picking = run("conventionalComments.insertLabel");
 
     // Label step: praise is active; move to suggestion.
-    await sleep(300);
+    await waitForWidget();
     await run("workbench.action.quickOpenSelectNext");
     await run("workbench.action.quickOpenSelectNext");
     await run("workbench.action.acceptSelectedQuickOpenItem");
 
     // Decoration step: "none" is active; move to non-blocking.
-    await sleep(300);
+    await waitForWidget();
     await run("workbench.action.quickOpenSelectNext");
     await run("workbench.action.acceptSelectedQuickOpenItem");
     await picking;
@@ -165,9 +121,9 @@ describe("Conventional Comments", () => {
   it("remembers the format chosen through a suggestion", async () => {
     const editor = await openComment("issue: x");
     await run("conventionalComments.toggleFormat"); // badge, remembered for this comment
-    const badgeEnd = buildPrefix("issue", [], true).length;
+    const badgeEnd = buildPrefix("issue", [], "badge").length;
     const items = await completions(editor, editor.document.positionAt(badgeEnd));
-    await accept(editor, items.find((i) => labelOf(i) === "switch to plain text"));
+    await acceptEdits(editor, items.find((i) => labelOf(i) === "switch to plain text"));
     assert.equal(editor.document.getText(), "issue: x");
 
     await run("conventionalComments.removeLabel");
