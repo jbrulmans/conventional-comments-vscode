@@ -4,31 +4,40 @@ Label your pull request review comments in VS Code with [Conventional Comments](
 
 This is a VS Code port of the [Conventional Comments browser extension by Pullpo](https://github.com/pullpo-io/conventional-comments). It works in the comment boxes of the [GitHub Pull Requests](https://marketplace.visualstudio.com/items?itemName=GitHub.vscode-pull-request-github) and [GitLab Workflow](https://marketplace.visualstudio.com/items?itemName=GitLab.gitlab-workflow) extensions, and in any other extension that uses VS Code's comments API.
 
-<!-- TODO: add demo GIF -->
+<!-- TODO: add screenshot of the button row -->
+
+## Install
+
+1. Download the `.vsix` from the [latest release](https://github.com/jbrulmans/conventional-comments-vscode/releases/latest) and run `code --install-extension conventional-comments-vscode-<version>.vsix`.
+2. To get the button row, enable the proposed API it relies on:
+   1. Run **Preferences: Configure Runtime Arguments** from the Command Palette.
+   2. Add this entry to `argv.json`:
+      ```jsonc
+      "enable-proposed-api": ["jbrulmans.conventional-comments-vscode"]
+      ```
+   3. Restart VS Code. A reload isn't enough.
+
+Without step 2, everything except the buttons still works.
 
 ## Usage
 
-VS Code doesn't let extensions add a toolbar to comment boxes, so the original toolbar is replaced by suggestions and a command.
+### Buttons
 
-### Suggestions (the toolbar replacement)
+The button row sits below the comment box and works like the browser toolbar:
 
-1. Start a review comment on a PR.
-2. At the start of the comment, press <kbd>Ctrl</kbd>+<kbd>Space</kbd> (or just start typing a label) and pick a label.
-3. The decoration list opens automatically. Pick `(non-blocking)`, `(blocking)` or `(if-minor)`, or press <kbd>Esc</kbd> to skip.
-4. Write your comment.
+1. Click a label (`praise`, `suggestion`, …) to add it to the start of your comment.
+2. The row switches to `suggestion ›` followed by the decorations. Click a decoration to add it, and click it again (`✓ non-blocking`) to remove it.
+3. Click `suggestion ›` to pick a different label. Clicking the current one (`✓ suggestion`) removes the label.
+4. `badge` / `✓ badge` switches between the badge and plain text formats.
 
-Press <kbd>Ctrl</kbd>+<kbd>Space</kbd> again with the cursor inside an existing label to:
+VS Code only lets extensions add buttons to the comment box's action row, not above it.
 
-- add, change or remove the decoration (picking the current decoration removes it),
-- switch to another label (this keeps your comment text),
-- remove the label,
-- toggle between badge and plain text format.
+### Keyboard
 
-### Command
+- Type `/` at the start of a comment, or press <kbd>Cmd</kbd>+<kbd>Alt</kbd>+<kbd>C</kbd> (<kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>C</kbd> on Windows/Linux), then pick a label. The decoration list opens right after.
+- Put the cursor inside an existing label and press <kbd>Cmd</kbd>+<kbd>Alt</kbd>+<kbd>C</kbd> to change the decoration or label, remove the label, or toggle the format.
 
-**Conventional Comments: Insert Label…** (<kbd>Cmd</kbd>+<kbd>Alt</kbd>+<kbd>C</kbd> / <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>C</kbd> while a comment box is focused) walks you through picking a label and a decoration. It's also shown as a button next to the comment actions in GitHub/GitLab review threads.
-
-Other commands: **Toggle Badge / Plain Format** and **Remove Label**.
+Command Palette: **Conventional Comments: Toggle Badge / Plain Format** and **Remove Label**.
 
 ## Formats
 
@@ -38,7 +47,7 @@ Plain text:
 suggestion(non-blocking): extract this into a helper
 ```
 
-Badge (default, same as the browser extension), rendered as a colored shields.io badge on GitHub/GitLab:
+Badge (the default, same as the browser extension), rendered as a colored shields.io badge on GitHub/GitLab:
 
 ```
 [![suggestion(non-blocking)](https://img.shields.io/badge/suggestion-non--blocking-9CA3AF?labelColor=3B82F6)](https://pullpo.io/cc?l=suggestion&d=non-blocking)
@@ -52,7 +61,7 @@ Both formats are recognized when editing, including comments written with the br
 | Setting | Default | Description |
 |---|---|---|
 | `conventionalComments.prettify` | `true` | Insert badges instead of plain text. Existing labels keep their format. |
-| `conventionalComments.showCommentButton` | `true` | Show the **Insert Label…** button in review threads. |
+| `conventionalComments.showButtons` | `true` | Show the button row below comment boxes. |
 
 ## Not included
 
@@ -62,11 +71,15 @@ The browser extension's Slack-threads feature depends on Pullpo's PR-Channels se
 
 ```sh
 npm install
-npm test          # unit tests
-npm run compile   # type-check + bundle
+npm test                  # unit tests
+npm run test:integration  # runs inside a VS Code instance
+npm run compile           # type-check + bundle
+npm run manifest          # regenerate button commands/menus in package.json
 ```
 
-Press <kbd>F5</kbd> in VS Code to launch an Extension Development Host. `npm run package` builds a `.vsix`.
+Press <kbd>F5</kbd> in VS Code to launch an Extension Development Host, where proposed API is enabled automatically. `npm run package` builds a `.vsix`.
+
+Because the extension uses a proposed API, it's distributed through GitHub Releases rather than the Marketplace.
 
 ## Credits
 
