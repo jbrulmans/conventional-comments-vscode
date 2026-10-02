@@ -11,6 +11,13 @@ import {
 import { COMMENT_SCHEME } from "./target";
 import { isPrettified } from "./toolbar";
 
+// Other providers in comment boxes (e.g. GitHub issues, sorted "00000000",
+// "00000001", ...) are mixed into the same list. A leading space sorts before
+// any digit or letter, keeping our items on top.
+function sortKey(key: string | number): string {
+  return ` ${String(key).padStart(2, "0")}`;
+}
+
 function documentation(item: Convention, badgeUrl: string): vscode.MarkdownString {
   return new vscode.MarkdownString(`${item.desc}\n\n![${item.label}](${badgeUrl})`);
 }
@@ -66,7 +73,8 @@ export class ConventionalCommentsCompletionProvider
       item.insertText = buildPrefix(l.label, undefined, prettified);
       item.range = range;
       item.filterText = slash ? `/${l.label}` : l.label;
-      item.sortText = String(i).padStart(2, "0");
+      item.sortText = sortKey(i);
+      item.preselect = i === 0;
       item.documentation = documentation(l, createBadgeUrl(l.label));
       // Second step: offer decorations right away, like the original toolbar.
       item.command = { command: "editor.action.triggerSuggest", title: "" };
@@ -99,7 +107,7 @@ export class ConventionalCommentsCompletionProvider
       item.insertText = "";
       item.range = range;
       item.filterText = name;
-      item.sortText = sort;
+      item.sortText = sortKey(sort);
       item.command = command;
       items.push(item);
       return item;
@@ -118,6 +126,7 @@ export class ConventionalCommentsCompletionProvider
         }
       );
       item.documentation = documentation(d, createBadgeUrl(label, d.label));
+      item.preselect = i === 0;
     });
 
     LABELS.filter((l) => l.label !== label).forEach((l, i) => {
@@ -129,12 +138,12 @@ export class ConventionalCommentsCompletionProvider
       item.documentation = documentation(l, createBadgeUrl(l.label));
     });
 
-    make(`remove ${label}`, "Remove the conventional comment label.", "2", {
+    make(`remove ${label}`, "Remove the conventional comment label.", "20", {
       command: Commands.removeLabel,
       title: "",
       arguments: [uri],
     });
-    make("toggle format", "Switch between badge and plain text.", "3", {
+    make("toggle format", "Switch between badge and plain text.", "30", {
       command: Commands.toggleFormat,
       title: "",
       arguments: [uri],

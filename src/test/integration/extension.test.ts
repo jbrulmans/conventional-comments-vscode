@@ -77,6 +77,26 @@ describe("Conventional Comments", () => {
     assert.ok(!labels.includes("suggestion"), `got ${labels}`);
   });
 
+  it("sorts its items before other providers' (e.g. GitHub issues)", async () => {
+    const issueSortText = "00000000"; // what the GitHub PR extension uses
+    for (const text of ["", "nitpick: "]) {
+      const editor = await openComment(text);
+      const list = await vscode.commands.executeCommand<vscode.CompletionList>(
+        "vscode.executeCompletionItemProvider",
+        editor.document.uri,
+        editor.document.positionAt(text.length)
+      );
+      const ours = list.items.filter((i) => {
+        const label = typeof i.label === "string" ? i.label : i.label.label;
+        return /^(praise|nitpick|suggestion|todo|issue|question|thought|chore|\(.*\)|remove .*|toggle format)$/.test(label);
+      });
+      assert.ok(ours.length >= 8, `only ${ours.length} items of ours`);
+      for (const item of ours) {
+        assert.ok(item.sortText! < issueSortText, `${JSON.stringify(item.label)} sorts after issues`);
+      }
+    }
+  });
+
   it("drives the toolbar buttons like the original", async () => {
     const editor = await openComment("use a map here");
     const text = () => editor.document.getText();
