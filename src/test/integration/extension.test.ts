@@ -1,6 +1,6 @@
 import { strict as assert } from "node:assert";
 import * as vscode from "vscode";
-import { buildPrefix } from "../../conventions";
+import { LABELS, buildPrefix } from "../../conventions";
 
 // Comment widget inputs are `comment:` documents. VS Code core provides their
 // content, so tests can open one in a regular editor and drive the commands.
@@ -21,21 +21,29 @@ async function openComment(text = ""): Promise<vscode.TextEditor> {
   return editor;
 }
 
-async function completionLabels(
+const labelOf = (i: vscode.CompletionItem) => (typeof i.label === "string" ? i.label : i.label.label);
+
+async function completions(
   editor: vscode.TextEditor,
   position: vscode.Position,
   trigger?: string
-): Promise<string[]> {
+): Promise<vscode.CompletionItem[]> {
   const list = await vscode.commands.executeCommand<vscode.CompletionList>(
     "vscode.executeCompletionItemProvider",
     editor.document.uri,
     position,
     trigger
   );
-  return list.items.map((i) => (typeof i.label === "string" ? i.label : i.label.label));
+  return list.items;
+}
+
+async function accept(item: vscode.CompletionItem | undefined): Promise<void> {
+  assert.ok(item, "completion item not found");
+  await vscode.commands.executeCommand(item.command!.command, ...(item.command!.arguments ?? []));
 }
 
 const run = (command: string) => vscode.commands.executeCommand(command);
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 describe("Conventional Comments", () => {
   before(async () => {
@@ -57,23 +65,23 @@ describe("Conventional Comments", () => {
     assert.equal(editor.document.uri.scheme, "comment");
   });
 
-  it("suggests labels at the start of a comment", async () => {
+  it("suggests all labels at the start of a comment", async () => {
     const editor = await openComment();
-    const labels = await completionLabels(editor, new vscode.Position(0, 0));
-    for (const label of ["praise", "nitpick", "suggestion", "todo", "issue", "question", "thought", "chore"]) {
+    const labels = (await completions(editor, new vscode.Position(0, 0))).map(labelOf);
+    for (const { label } of LABELS) {
       assert.ok(labels.includes(label), `missing ${label} in ${labels}`);
     }
   });
 
   it("suggests labels after typing /", async () => {
     const editor = await openComment("/");
-    const labels = await completionLabels(editor, new vscode.Position(0, 1), "/");
+    const labels = (await completions(editor, new vscode.Position(0, 1), "/")).map(labelOf);
     assert.ok(labels.includes("suggestion"), `got ${labels}`);
   });
 
   it("does not suggest labels in the middle of a comment", async () => {
     const editor = await openComment("looks good /");
-    const labels = await completionLabels(editor, new vscode.Position(0, 12), "/");
+    const labels = (await completions(editor, new vscode.Position(0, 12), "/")).map(labelOf);
     assert.ok(!labels.includes("suggestion"), `got ${labels}`);
   });
 
@@ -81,63 +89,65 @@ describe("Conventional Comments", () => {
     const issueSortText = "00000000"; // what the GitHub PR extension uses
     for (const text of ["", "nitpick: "]) {
       const editor = await openComment(text);
-      const list = await vscode.commands.executeCommand<vscode.CompletionList>(
-        "vscode.executeCompletionItemProvider",
-        editor.document.uri,
-        editor.document.positionAt(text.length)
-      );
-      const ours = list.items.filter((i) => {
-        const label = typeof i.label === "string" ? i.label : i.label.label;
-        return /^(praise|nitpick|suggestion|todo|issue|question|thought|chore|\(.*\)|remove .*|switch to .*)$/.test(label);
-      });
-      assert.ok(ours.length >= 8, `only ${ours.length} items of ours`);
+      const items = await completions(editor, editor.document.positionAt(text.length));
+      const ours = items.filter((i) => i.kind === vscode.CompletionItemKind.EnumMember);
+      assert.ok(ours.length >= LABELS.length, `only ${ours.length} items of ours`);
       for (const item of ours) {
-        assert.ok(item.sortText! < issueSortText, `${JSON.stringify(item.label)} sorts after issues`);
+        assert.ok(item.sortText! < issueSortText, `${labelOf(item)} sorts after issues`);
       }
     }
   });
 
-  it("drives the header menu like the original toolbar", async () => {
+  it("sets one decoration at a time from suggestions", async () => {
+    const editor = await openComment("suggestion: use a map");
+    const at = () => completions(editor, new vscode.Position(0, 0));
+    const find = async (label: string) => (await at()).find((i) => labelOf(i) === label);
+
+    await accept(await find("(non-blocking)"));
+    assert.equal(editor.document.getText(), "suggestion (non-blocking): use a map");
+
+    await accept(await find("(if-minor)"));
+    assert.equal(editor.document.getText(), "suggestion (if-minor): use a map");
+
+    await accept(await find("issue"));
+    assert.equal(editor.document.getText(), "issue (if-minor): use a map");
+
+    await accept(await find("remove (if-minor)"));
+    assert.equal(editor.document.getText(), "issue: use a map");
+  });
+
+  it("toggles the format from the header button", async () => {
+    const editor = await openComment("thought (non-blocking): later");
+    await run("conventionalComments.header.plain");
+    assert.equal(
+      editor.document.getText(),
+      buildPrefix("thought", ["non-blocking"], true) + "later"
+    );
+    await run("conventionalComments.header.badge");
+    assert.equal(editor.document.getText(), "thought (non-blocking): later");
+  });
+
+  it("inserts a label and decoration through the picker", async () => {
     const editor = await openComment("use a map here");
-    const text = () => editor.document.getText();
+    const picking = vscode.commands.executeCommand("conventionalComments.insertLabel");
 
-    await run("conventionalComments.menu.label.suggestion");
-    assert.equal(text(), "suggestion: use a map here");
+    // Label step: praise is active; move to suggestion.
+    await sleep(300);
+    await run("workbench.action.quickOpenSelectNext");
+    await run("workbench.action.quickOpenSelectNext");
+    await run("workbench.action.acceptSelectedQuickOpenItem");
 
-    await run("conventionalComments.menu.decoration.non-blocking");
-    assert.equal(text(), "suggestion(non-blocking): use a map here");
+    // Decoration step: "none" is active; move to non-blocking.
+    await sleep(300);
+    await run("workbench.action.quickOpenSelectNext");
+    await run("workbench.action.acceptSelectedQuickOpenItem");
+    await picking;
 
-    await run("conventionalComments.menu.decorationSelected.non-blocking");
-    assert.equal(text(), "suggestion: use a map here");
-
-    await run("conventionalComments.menu.label.issue");
-    assert.equal(text(), "issue: use a map here");
-
-    await run("conventionalComments.menu.format.badge");
-    assert.equal(text(), buildPrefix("issue", undefined, true) + "use a map here");
-
-    await run("conventionalComments.menu.format.plain");
-    assert.equal(text(), "issue: use a map here");
-
-    await run("conventionalComments.menu.labelSelected.issue");
-    assert.equal(text(), "use a map here");
-  });
-
-  it("remembers the format for a comment without a label", async () => {
-    const editor = await openComment("hello");
-    await run("conventionalComments.menu.format.badge");
-    await run("conventionalComments.menu.label.praise");
-    assert.equal(editor.document.getText(), buildPrefix("praise", undefined, true) + "hello");
-  });
-
-  it("removes the label from the menu", async () => {
-    const editor = await openComment("todo(blocking): add tests");
-    await run("conventionalComments.menu.remove");
-    assert.equal(editor.document.getText(), "add tests");
+    assert.equal(editor.document.getText(), "suggestion (non-blocking): use a map here");
   });
 
   it("removes the label from the palette", async () => {
-    const editor = await openComment("chore(if-minor): bump deps");
+    const editor = await openComment("chore (if-minor): bump deps");
     await run("conventionalComments.removeLabel");
     assert.equal(editor.document.getText(), "bump deps");
   });
