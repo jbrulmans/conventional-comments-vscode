@@ -1,0 +1,101 @@
+{
+  "name": "conventional-comments-vscode",
+  "displayName": "Conventional Comments for PR Reviews",
+  "description": "Add Conventional Comments labels (praise, nitpick, suggestion, issue, ...) and decorations to pull request review comments in VS Code.",
+  "version": "0.1.0",
+  "publisher": "jbrulmans",
+  "license": "MIT",
+  "icon": "images/icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jbrulmans/conventional-comments-vscode.git"
+  },
+  "bugs": {
+    "url": "https://github.com/jbrulmans/conventional-comments-vscode/issues"
+  },
+  "homepage": "https://github.com/jbrulmans/conventional-comments-vscode#readme",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "conventional comments",
+    "code review",
+    "pull request",
+    "github",
+    "gitlab",
+    "review comments"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "conventionalComments.insertLabel",
+        "title": "Insert Label…",
+        "category": "Conventional Comments"
+      },
+      {
+        "command": "conventionalComments.toggleFormat",
+        "title": "Toggle Badge / Plain Format",
+        "category": "Conventional Comments"
+      },
+      {
+        "command": "conventionalComments.removeLabel",
+        "title": "Remove Label",
+        "category": "Conventional Comments"
+      }
+    ],
+    "menus": {
+      "comments/commentThread/context": [
+        {
+          "command": "conventionalComments.insertLabel",
+          "group": "inline@0",
+          "when": "config.conventionalComments.showCommentButton && commentController =~ /github|gitlab/"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "conventionalComments.insertLabel",
+        "key": "ctrl+alt+c",
+        "mac": "cmd+alt+c",
+        "when": "commentEditorFocused"
+      }
+    ],
+    "configuration": {
+      "title": "Conventional Comments",
+      "properties": {
+        "conventionalComments.prettify": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Insert labels as shields.io badges (rendered on GitHub/GitLab) instead of plain text like `suggestion(non-blocking):`."
+        },
+        "conventionalComments.showCommentButton": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Show an **Insert Label…** button next to the comment actions in PR review threads."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run check-types && npm run bundle -- --minify",
+    "bundle": "esbuild src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node --target=node18",
+    "compile": "npm run check-types && npm run bundle -- --sourcemap",
+    "check-types": "tsc --noEmit",
+    "test": "tsc -p tsconfig.test.json && node --test \"out/test/**/*.test.js\"",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/vscode": "~1.90.0",
+    "@vscode/vsce": "^3.0.0",
+    "esbuild": "^0.24.0",
+    "typescript": "^5.6.0"
+  }
+}
