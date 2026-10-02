@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.0
+
+- First release on the VS Code Marketplace and Open VSX.
+- Works in Restricted Mode and virtual workspaces, and runs locally when connected to a remote (SSH, WSL, Codespaces).
+- No functional changes since 0.5.0.
+
 ## 0.5.0
 
 - **Breaking:** the `conventionalComments.prettify` setting (true/false) is now `conventionalComments.defaultFormat` (`badge`/`plain`). If you had set `prettify` to `false`, set `defaultFormat` to `plain`.
