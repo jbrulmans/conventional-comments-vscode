@@ -143,11 +143,13 @@ export class ConventionalCommentsCompletionProvider
       title: "",
       arguments: [uri],
     });
-    make("toggle format", "Switch between badge and plain text.", "30", {
-      command: Commands.toggleFormat,
-      title: "",
-      arguments: [uri],
-    });
+    const prettified = isPrettified(doc);
+    make(
+      prettified ? "switch to plain text" : "switch to badge",
+      `Currently ${prettified ? "a badge" : "plain text"}.`,
+      "30",
+      { command: Commands.setFormat, title: "", arguments: [uri, !prettified] }
+    );
 
     return items;
   }
