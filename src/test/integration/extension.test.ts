@@ -37,9 +37,13 @@ async function completions(
   return list.items;
 }
 
-async function accept(item: vscode.CompletionItem | undefined): Promise<void> {
+/** Applies an item's edits like the suggest widget does (without its UI). */
+async function accept(editor: vscode.TextEditor, item: vscode.CompletionItem | undefined): Promise<void> {
   assert.ok(item, "completion item not found");
-  await vscode.commands.executeCommand(item.command!.command, ...(item.command!.arguments ?? []));
+  assert.equal(item.command, undefined, "prefix items must not depend on commands");
+  const edit = new vscode.WorkspaceEdit();
+  edit.set(editor.document.uri, item.additionalTextEdits ?? []);
+  await vscode.workspace.applyEdit(edit);
 }
 
 const run = (command: string) => vscode.commands.executeCommand(command);
@@ -103,16 +107,16 @@ describe("Conventional Comments", () => {
     const at = () => completions(editor, new vscode.Position(0, 0));
     const find = async (label: string) => (await at()).find((i) => labelOf(i) === label);
 
-    await accept(await find("(non-blocking)"));
+    await accept(editor, await find("(non-blocking)"));
     assert.equal(editor.document.getText(), "suggestion (non-blocking): use a map");
 
-    await accept(await find("(if-minor)"));
+    await accept(editor, await find("(if-minor)"));
     assert.equal(editor.document.getText(), "suggestion (if-minor): use a map");
 
-    await accept(await find("issue"));
+    await accept(editor, await find("issue"));
     assert.equal(editor.document.getText(), "issue (if-minor): use a map");
 
-    await accept(await find("remove (if-minor)"));
+    await accept(editor, await find("remove (if-minor)"));
     assert.equal(editor.document.getText(), "issue: use a map");
   });
 
