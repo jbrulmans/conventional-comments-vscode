@@ -1,12 +1,14 @@
 import * as vscode from "vscode";
-import { Commands } from "./commands";
 import {
   Convention,
   DECORATIONS,
   LABELS,
+  PrefixEdit,
   buildPrefix,
   createBadgeUrl,
   parsePrefix,
+  removePrefix,
+  setPrefix,
 } from "./conventions";
 import { COMMENT_SCHEME } from "./target";
 import { isPrettified } from "./format";
@@ -88,27 +90,27 @@ export class ConventionalCommentsCompletionProvider
     decorations: string[],
     position: vscode.Position
   ): vscode.CompletionItem[] {
-    // The prefix may span lines (badge form), which a completion range cannot,
-    // so items insert nothing and a command rewrites the prefix.
-    const range = new vscode.Range(position, position);
-    const uri = doc.uri.toString();
+    // Items insert nothing at the cursor and rewrite the prefix through an
+    // additional edit, since the prefix may span lines (badge form). They must
+    // not rely on commands with arguments: VS Code releases the completion list
+    // (and the cached arguments) before running an accepted item's command.
+    const text = doc.getText();
+    const prettified = isPrettified(doc);
     const items: vscode.CompletionItem[] = [];
 
-    const make = (
-      name: string,
-      description: string,
-      sort: string,
-      command: vscode.Command
-    ) => {
+    const make = (name: string, description: string, sort: string, edit: PrefixEdit | undefined) => {
       const item = new vscode.CompletionItem(
         { label: name, description },
         vscode.CompletionItemKind.EnumMember
       );
       item.insertText = "";
-      item.range = range;
+      item.range = new vscode.Range(position, position);
       item.filterText = name;
       item.sortText = sort;
-      item.command = command;
+      if (edit) {
+        const range = new vscode.Range(doc.positionAt(0), doc.positionAt(edit.end));
+        item.additionalTextEdits = [vscode.TextEdit.replace(range, edit.text)];
+      }
       items.push(item);
       return item;
     };
@@ -120,38 +122,30 @@ export class ConventionalCommentsCompletionProvider
         selected ? `remove (${d.label})` : `(${d.label})`,
         d.desc,
         sortKey(0, i),
-        {
-          command: Commands.applyPrefix,
-          title: "",
-          arguments: [uri, label, selected ? undefined : d.label],
-        }
+        setPrefix(text, label, selected ? [] : [d.label], prettified)
       );
       item.documentation = documentation(d, createBadgeUrl(label, [d.label]));
       item.preselect = i === 0;
     });
 
     // Changing the label keeps the decoration.
-    const decoration = decorations[0];
+    const kept = decorations.slice(0, 1);
     LABELS.filter((l) => l.label !== label).forEach((l, i) => {
-      const item = make(l.label, `change label · ${l.desc}`, sortKey(1, i), {
-        command: Commands.applyPrefix,
-        title: "",
-        arguments: [uri, l.label, decoration],
-      });
-      item.documentation = documentation(l, createBadgeUrl(l.label, decorations));
+      const item = make(
+        l.label,
+        `change label · ${l.desc}`,
+        sortKey(1, i),
+        setPrefix(text, l.label, kept, prettified)
+      );
+      item.documentation = documentation(l, createBadgeUrl(l.label, kept));
     });
 
-    make(`remove ${label}`, "Remove the conventional comment label.", sortKey(2), {
-      command: Commands.removeLabel,
-      title: "",
-      arguments: [uri],
-    });
-    const prettified = isPrettified(doc);
+    make(`remove ${label}`, "Remove the conventional comment label.", sortKey(2), removePrefix(text));
     make(
       prettified ? "switch to plain text" : "switch to badge",
       `Currently ${prettified ? "a badge" : "plain text"}.`,
       sortKey(3),
-      { command: Commands.setFormat, title: "", arguments: [uri, !prettified] }
+      setPrefix(text, label, decorations, !prettified)
     );
 
     return items;

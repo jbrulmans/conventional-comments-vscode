@@ -37,10 +37,6 @@ export function getTargetDocument(): vscode.TextDocument | undefined {
   return isComment(lastDocument) ? lastDocument : undefined;
 }
 
-export function findDocument(uri: string): vscode.TextDocument | undefined {
-  return vscode.workspace.textDocuments.find((d) => d.uri.toString() === uri);
-}
-
 export function trackCommentEditors(): vscode.Disposable[] {
   setTarget(vscode.window.activeTextEditor);
   return [
