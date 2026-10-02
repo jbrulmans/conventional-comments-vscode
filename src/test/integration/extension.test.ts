@@ -88,7 +88,7 @@ describe("Conventional Comments", () => {
       );
       const ours = list.items.filter((i) => {
         const label = typeof i.label === "string" ? i.label : i.label.label;
-        return /^(praise|nitpick|suggestion|todo|issue|question|thought|chore|\(.*\)|remove .*|toggle format)$/.test(label);
+        return /^(praise|nitpick|suggestion|todo|issue|question|thought|chore|\(.*\)|remove .*|switch to .*)$/.test(label);
       });
       assert.ok(ours.length >= 8, `only ${ours.length} items of ours`);
       for (const item of ours) {
@@ -97,39 +97,43 @@ describe("Conventional Comments", () => {
     }
   });
 
-  it("drives the toolbar buttons like the original", async () => {
+  it("drives the header menu like the original toolbar", async () => {
     const editor = await openComment("use a map here");
     const text = () => editor.document.getText();
 
-    await run("conventionalComments.button.label.suggestion");
+    await run("conventionalComments.menu.label.suggestion");
     assert.equal(text(), "suggestion: use a map here");
 
-    await run("conventionalComments.button.decoration.non-blocking");
+    await run("conventionalComments.menu.decoration.non-blocking");
     assert.equal(text(), "suggestion(non-blocking): use a map here");
 
-    await run("conventionalComments.button.decorationSelected.non-blocking");
+    await run("conventionalComments.menu.decorationSelected.non-blocking");
     assert.equal(text(), "suggestion: use a map here");
 
-    await run("conventionalComments.button.changeLabel.suggestion");
-    await run("conventionalComments.button.label.issue");
+    await run("conventionalComments.menu.label.issue");
     assert.equal(text(), "issue: use a map here");
 
-    await run("conventionalComments.button.format");
+    await run("conventionalComments.menu.format.badge");
     assert.equal(text(), buildPrefix("issue", undefined, true) + "use a map here");
 
-    await run("conventionalComments.button.formatSelected");
+    await run("conventionalComments.menu.format.plain");
     assert.equal(text(), "issue: use a map here");
 
-    await run("conventionalComments.button.changeLabel.issue");
-    await run("conventionalComments.button.labelSelected.issue");
+    await run("conventionalComments.menu.labelSelected.issue");
     assert.equal(text(), "use a map here");
   });
 
-  it("keeps the badge toggle for a comment without a label", async () => {
+  it("remembers the format for a comment without a label", async () => {
     const editor = await openComment("hello");
-    await run("conventionalComments.button.format");
-    await run("conventionalComments.button.label.praise");
+    await run("conventionalComments.menu.format.badge");
+    await run("conventionalComments.menu.label.praise");
     assert.equal(editor.document.getText(), buildPrefix("praise", undefined, true) + "hello");
+  });
+
+  it("removes the label from the menu", async () => {
+    const editor = await openComment("todo(blocking): add tests");
+    await run("conventionalComments.menu.remove");
+    assert.equal(editor.document.getText(), "add tests");
   });
 
   it("removes the label from the palette", async () => {
