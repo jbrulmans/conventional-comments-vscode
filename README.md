@@ -1,37 +1,41 @@
 # Conventional Comments for PR Reviews
 
-Write pull request review comments in VS Code using [Conventional Comments](https://conventionalcomments.org/), as plain text or as colored badges.
+Label your pull request review comments in VS Code with [Conventional Comments](https://conventionalcomments.org/), such as `praise:`, `nitpick:` and `issue (blocking):`, as plain text or as colored badges.
 
-```
-<label> [decorations]: <subject>
+[![CI](https://github.com/jbrulmans/conventional-comments-vscode/actions/workflows/ci.yml/badge.svg)](https://github.com/jbrulmans/conventional-comments-vscode/actions/workflows/ci.yml)
 
-[discussion]
-```
+![Adding a label with the + button](images/demo-picker.gif)
 
-It works in the comment boxes of the [GitHub Pull Requests](https://marketplace.visualstudio.com/items?itemName=GitHub.vscode-pull-request-github) and [GitLab Workflow](https://marketplace.visualstudio.com/items?itemName=GitLab.gitlab-workflow) extensions, and in any other extension that uses VS Code's comments API.
+Conventional Comments make review feedback easier to read. Everyone sees at a glance whether a comment is praise, a question or a blocking issue. This extension adds the labels to the comment boxes of the [GitHub Pull Requests](https://marketplace.visualstudio.com/items?itemName=GitHub.vscode-pull-request-github) and [GitLab Workflow](https://marketplace.visualstudio.com/items?itemName=GitLab.gitlab-workflow) extensions, and to any other extension that uses VS Code's comments API.
 
-<!-- TODO: add screenshot of the header buttons and picker -->
+## Features
 
-## Install
-
-Download the `.vsix` from the [latest release](https://github.com/jbrulmans/conventional-comments-vscode/releases/latest) and run `code --install-extension conventional-comments-vscode-<version>.vsix`.
+- **Picker:** pick a label and a decoration with the **+** button in the comment thread header, or <kbd>Cmd</kbd>/<kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>C</kbd>.
+- **`/` suggestions:** type `/` at the start of a comment to pick a label without leaving the keyboard.
+- **Badge or plain text:** colored shields.io badges on GitHub/GitLab, or the plain spec prefix. Switch with one click.
+- **Spec-exact:** all labels from [conventionalcomments.org](https://conventionalcomments.org/), including the expressive ones, in the exact `label (decoration): subject` format.
+- **Custom decorations:** next to `non-blocking`, `blocking` and `if-minor`, type your own, e.g. `security`.
 
 ## Usage
 
 ### Add a label
 
-Click **+** in the header of a comment thread, or press <kbd>Cmd</kbd>+<kbd>Alt</kbd>+<kbd>C</kbd> (<kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>C</kbd> on Windows/Linux) inside a comment box:
+Click **+** in the header of a comment thread, or press <kbd>Cmd</kbd>+<kbd>Alt</kbd>+<kbd>C</kbd> (<kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>C</kbd> on Windows/Linux) inside a comment box.
 
-1. Pick a label. The current one is marked with a check, and **Remove label** is at the bottom.
-2. Pick a decoration (`non-blocking`, `blocking`, `if-minor`) or `none`. To use a custom decoration such as `security`, type it and pick the **+ security** item.
+1. Pick a label. The current one has a check mark, and **Remove label** is at the bottom.
+2. Pick a decoration, or `none`. For a custom decoration, type it and pick the **+ security** item.
 
-The label goes at the start of the comment, replacing any existing one, e.g. `suggestion (non-blocking): `.
+The label goes at the start of the comment, replacing any existing one: `suggestion (non-blocking): `.
 
 ### Type `/`
 
-Type `/` at the start of a comment to pick a label right in the box. The decoration list opens right after. With the cursor right after an existing label, press <kbd>Ctrl</kbd>+<kbd>Space</kbd> (if your OS doesn't use it) to change the decoration or label, remove the label, or switch the format.
+![Picking a label and decoration with /](images/demo-slash.gif)
+
+Type `/` at the start of a comment and pick a label. The decorations open right after. Later, with the cursor right after the label, press <kbd>Ctrl</kbd>+<kbd>Space</kbd> to change the decoration or label, remove it, or switch the format.
 
 ### Badge or plain text
+
+![Switching between badge and plain text](images/demo-format.gif)
 
 The second header button shows the comment's format: a tag icon for a badge, a text icon for plain text. Click it to switch. New labels use the `conventionalComments.defaultFormat` setting.
 
@@ -41,22 +45,11 @@ Plain text, exactly as in the spec:
 suggestion (non-blocking): extract this into a helper
 ```
 
-Badge, rendered as a colored shields.io image on GitHub/GitLab. Its alt text is the same plain prefix:
+Badge, a colored image on GitHub/GitLab whose alt text is the plain prefix:
 
 ```
 ![suggestion (non-blocking):](https://img.shields.io/badge/suggestion-non--blocking-9CA3AF?labelColor=3B82F6)
 extract this into a helper
-```
-
-### Change the shortcut
-
-<kbd>Cmd</kbd>/<kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>C</kbd> is only the default. To change it, run **Conventional Comments: Change Keyboard Shortcut**. It opens Keyboard Shortcuts filtered to the command, where you can record a new key or reset it. In `keybindings.json`:
-
-```json
-[
-  { "key": "ctrl+shift+l", "command": "conventionalComments.insertLabel", "when": "commentEditorFocused" },
-  { "key": "cmd+alt+c", "command": "-conventionalComments.insertLabel" }
-]
 ```
 
 ## Labels and decorations
@@ -82,7 +75,18 @@ From [conventionalcomments.org](https://conventionalcomments.org/):
 | `(blocking)` | Should prevent the change from being accepted until resolved. |
 | `(if-minor)` | Resolve only if the change is minor or trivial. |
 
-The pickers set one decoration. Several comma-separated ones written by hand, like `(security,if-minor)`, are recognized and kept when switching format.
+The pickers set one decoration. Several comma-separated ones written by hand, like `(security,if-minor)`, are recognized and kept.
+
+## Keyboard shortcut
+
+<kbd>Cmd</kbd>/<kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>C</kbd> opens the picker while a comment box is focused. It's only a default: run **Conventional Comments: Change Keyboard Shortcut** to record another key, or add this to `keybindings.json`:
+
+```json
+[
+  { "key": "ctrl+shift+l", "command": "conventionalComments.insertLabel", "when": "commentEditorFocused" },
+  { "key": "cmd+alt+c", "command": "-conventionalComments.insertLabel" }
+]
+```
 
 ## Settings
 
@@ -91,13 +95,29 @@ The pickers set one decoration. Several comma-separated ones written by hand, li
 | `conventionalComments.defaultFormat` | `badge` | How new labels are written: `badge` or `plain`. Existing labels keep their format. |
 | `conventionalComments.showHeaderButtons` | `true` | Show the + and format buttons in comment thread headers. |
 
-## Development
+## Requirements
 
-```sh
-npm install
-npm test                  # unit tests
-npm run test:integration  # runs inside a VS Code instance
-npm run compile           # type-check + bundle
-```
+An extension that provides pull request comment threads in VS Code, such as [GitHub Pull Requests](https://marketplace.visualstudio.com/items?itemName=GitHub.vscode-pull-request-github) or [GitLab Workflow](https://marketplace.visualstudio.com/items?itemName=GitLab.gitlab-workflow).
 
-Press <kbd>F5</kbd> in VS Code to launch an Extension Development Host. `npm run package` builds a `.vsix`.
+## Known limitations
+
+- **Which box the header buttons edit:** VS Code doesn't tell extensions which comment box belongs to which thread, so the buttons act on the box you last typed in. With several threads open, click into the box first.
+- **Ctrl+Space on macOS:** it often switches the input source instead. Use `/` or <kbd>Cmd</kbd>+<kbd>Alt</kbd>+<kbd>C</kbd>.
+- **Badges in VS Code:** they render on GitHub and GitLab. VS Code's own comment view may show the image markdown instead.
+
+## Install
+
+- **VS Code:** install from the [Marketplace](https://marketplace.visualstudio.com/items?itemName=jbrulmans.conventional-comments-vscode), or run `ext install jbrulmans.conventional-comments-vscode` in Quick Open (<kbd>Cmd</kbd>/<kbd>Ctrl</kbd>+<kbd>P</kbd>).
+- **Cursor, Windsurf, VSCodium:** install from [Open VSX](https://open-vsx.org/extension/jbrulmans/conventional-comments-vscode).
+
+## Contributing
+
+Issues and pull requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, tests and the release process.
+
+## Release notes
+
+See [CHANGELOG.md](CHANGELOG.md).
+
+## License
+
+[MIT](LICENSE)
