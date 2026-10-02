@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.1
+
+- Fix: label and decoration suggestions now stay above other suggestions in the comment box, such as GitHub issues.
+
 ## 0.2.0
 
 - Button row in comment boxes that works like the browser toolbar (labels, then decorations, plus a badge toggle). Requires `enable-proposed-api` in `argv.json`.

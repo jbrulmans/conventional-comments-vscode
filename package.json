@@ -2,7 +2,7 @@
   "name": "conventional-comments-vscode",
   "displayName": "Conventional Comments for PR Reviews",
   "description": "Add Conventional Comments labels (praise, nitpick, suggestion, issue, ...) and decorations to pull request review comments in VS Code.",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "publisher": "jbrulmans",
   "license": "MIT",
   "icon": "images/icon.png",
