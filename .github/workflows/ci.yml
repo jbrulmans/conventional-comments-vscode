@@ -17,4 +17,5 @@ jobs:
       - run: npm ci
       - run: npm run compile
       - run: npm test
+      - run: xvfb-run -a npm run test:integration
       - run: npx vsce package
