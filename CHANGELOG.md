@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.0
+
+- Replaced the button row with a tag menu in the comment thread header. It lists labels with descriptions, decorations and the badge/plain format, with ✓ on the current selection.
+- No longer uses proposed API, so the `argv.json` setup isn't needed anymore.
+- The `/` suggestions now show an explicit "switch to plain text" / "switch to badge" item.
+- Setting `conventionalComments.showButtons` is replaced by `conventionalComments.showHeaderMenu`.
+
 ## 0.2.1
 
 - Fix: label and decoration suggestions now stay above other suggestions in the comment box, such as GitHub issues.

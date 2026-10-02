@@ -4,38 +4,29 @@ Label your pull request review comments in VS Code with [Conventional Comments](
 
 This is a VS Code port of the [Conventional Comments browser extension by Pullpo](https://github.com/pullpo-io/conventional-comments). It works in the comment boxes of the [GitHub Pull Requests](https://marketplace.visualstudio.com/items?itemName=GitHub.vscode-pull-request-github) and [GitLab Workflow](https://marketplace.visualstudio.com/items?itemName=GitLab.gitlab-workflow) extensions, and in any other extension that uses VS Code's comments API.
 
-<!-- TODO: add screenshot of the button row -->
+<!-- TODO: add screenshot of the header menu -->
 
 ## Install
 
-1. Download the `.vsix` from the [latest release](https://github.com/jbrulmans/conventional-comments-vscode/releases/latest) and run `code --install-extension conventional-comments-vscode-<version>.vsix`.
-2. To get the button row, enable the proposed API it relies on:
-   1. Run **Preferences: Configure Runtime Arguments** from the Command Palette.
-   2. Add this entry to `argv.json`:
-      ```jsonc
-      "enable-proposed-api": ["jbrulmans.conventional-comments-vscode"]
-      ```
-   3. Restart VS Code. A reload isn't enough.
-
-Without step 2, everything except the buttons still works.
+Download the `.vsix` from the [latest release](https://github.com/jbrulmans/conventional-comments-vscode/releases/latest) and run `code --install-extension conventional-comments-vscode-<version>.vsix`.
 
 ## Usage
 
-### Buttons
+### Header menu
 
-The button row sits below the comment box and works like the browser toolbar:
+Click the **tag icon** in the header of a comment thread (top right, next to the collapse button). The menu shows everything at a glance, with ✓ on what's currently selected:
 
-1. Click a label (`praise`, `suggestion`, …) to add it to the start of your comment.
-2. The row switches to `suggestion ›` followed by the decorations. Click a decoration to add it, and click it again (`✓ non-blocking`) to remove it.
-3. Click `suggestion ›` to pick a different label. Clicking the current one (`✓ suggestion`) removes the label.
-4. `badge` / `✓ badge` switches between the badge and plain text formats.
+- **Labels**, each with its description. Click one to add it at the start of your comment, or click the selected one (`✓`) to remove it.
+- **Decorations**: `(non-blocking)`, `(blocking)`, `(if-minor)`. Click to toggle. They're greyed out until a label is set.
+- **Badge / Plain text**: the format of the label.
+- **Remove label**.
 
-VS Code only lets extensions add buttons to the comment box's action row, not above it.
+The menu acts on the comment box you last typed in.
 
-### Keyboard
+### Typing
 
 - Type `/` at the start of a comment, or press <kbd>Cmd</kbd>+<kbd>Alt</kbd>+<kbd>C</kbd> (<kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>C</kbd> on Windows/Linux), then pick a label. The decoration list opens right after.
-- Put the cursor inside an existing label and press <kbd>Cmd</kbd>+<kbd>Alt</kbd>+<kbd>C</kbd> to change the decoration or label, remove the label, or toggle the format.
+- Put the cursor inside an existing label and press <kbd>Cmd</kbd>+<kbd>Alt</kbd>+<kbd>C</kbd> to change the decoration or label, remove the label, or switch between badge and plain text.
 
 Command Palette: **Conventional Comments: Toggle Badge / Plain Format** and **Remove Label**.
 
@@ -61,7 +52,7 @@ Both formats are recognized when editing, including comments written with the br
 | Setting | Default | Description |
 |---|---|---|
 | `conventionalComments.prettify` | `true` | Insert badges instead of plain text. Existing labels keep their format. |
-| `conventionalComments.showButtons` | `true` | Show the button row below comment boxes. |
+| `conventionalComments.showHeaderMenu` | `true` | Show the tag menu in the header of comment threads. |
 
 ## Not included
 
@@ -74,12 +65,10 @@ npm install
 npm test                  # unit tests
 npm run test:integration  # runs inside a VS Code instance
 npm run compile           # type-check + bundle
-npm run manifest          # regenerate button commands/menus in package.json
+npm run manifest          # regenerate the header menu in package.json
 ```
 
-Press <kbd>F5</kbd> in VS Code to launch an Extension Development Host, where proposed API is enabled automatically. `npm run package` builds a `.vsix`.
-
-Because the extension uses a proposed API, it's distributed through GitHub Releases rather than the Marketplace.
+Press <kbd>F5</kbd> in VS Code to launch an Extension Development Host. `npm run package` builds a `.vsix`.
 
 ## Credits
 
