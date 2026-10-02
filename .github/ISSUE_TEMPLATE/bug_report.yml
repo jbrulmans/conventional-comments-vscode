@@ -1,0 +1,52 @@
+name: Bug report
+description: Something doesn't work as expected.
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What did you do, what did you expect, and what happened instead?
+      placeholder: |
+        1. Typed `/` in a new review comment and picked `issue`
+        2. Picked `(non-blocking)`
+        Expected `issue (non-blocking): `, got …
+    validations:
+      required: true
+  - type: dropdown
+    id: provider
+    attributes:
+      label: Comments provider
+      options:
+        - GitHub Pull Requests
+        - GitLab Workflow
+        - Other
+    validations:
+      required: true
+  - type: dropdown
+    id: format
+    attributes:
+      label: Format
+      options:
+        - Badge
+        - Plain text
+        - Both
+  - type: input
+    id: extension-version
+    attributes:
+      label: Extension version
+      placeholder: "1.0.0"
+    validations:
+      required: true
+  - type: input
+    id: vscode-version
+    attributes:
+      label: Editor and version
+      description: "Help → About, e.g. VS Code 1.135.0, Cursor 1.2"
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: Operating system
+      placeholder: macOS 15, Windows 11, Ubuntu 24.04
