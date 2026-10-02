@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.4.0
+
+- **Breaking:** labels follow conventionalcomments.org exactly. There's a space before the decorations (`suggestion (non-blocking):`), and badges are plain shields.io images without a link.
+- New labels: `note`, and the expressive `typo`, `polish`, `quibble`.
+- **+** button in the comment thread header and Cmd/Ctrl+Alt+C open a picker: label, then decoration (including custom ones).
+- New **Change Keyboard Shortcut** command. The shortcut is a default you can rebind.
+- The header tag button now only switches between badge and plain text, and its icon shows the current format.
+- Picking a decoration replaces the current one, and changing the label keeps the decoration. Both are covered by tests for every decoration path.
+- Setting `showHeaderMenu` is replaced by `showHeaderButtons`.
+
 ## 0.3.0
 
 - Replaced the button row with a tag menu in the comment thread header. It lists labels with descriptions, decorations and the badge/plain format, with ✓ on the current selection.
@@ -23,4 +33,4 @@
 
 - Label and decoration suggestions in PR review comment boxes.
 - **Insert Label…**, **Toggle Badge / Plain Format** and **Remove Label** commands.
-- Badge (shields.io) and plain text formats, compatible with the Pullpo browser extension.
+- Badge (shields.io) and plain text formats.
