@@ -29,7 +29,7 @@ The label goes at the start of the comment, replacing any existing one, e.g. `su
 
 ### Type `/`
 
-Type `/` at the start of a comment to pick a label right in the box. The decoration list opens right after. With the cursor inside an existing label, press <kbd>Ctrl</kbd>+<kbd>Space</kbd> (if your OS doesn't use it) to change the decoration or label, remove the label, or switch the format.
+Type `/` at the start of a comment to pick a label right in the box. The decoration list opens right after. With the cursor right after an existing label, press <kbd>Ctrl</kbd>+<kbd>Space</kbd> (if your OS doesn't use it) to change the decoration or label, remove the label, or switch the format.
 
 ### Badge or plain text
 

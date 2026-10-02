@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.4.2
+
+- Fix: typing to filter the label suggestions could garble the label. Label edits are now only suggested with the cursor right after the label.
+- Fix: switching between badge and plain text from the suggestions is now remembered for the next label in that comment.
+
 ## 0.4.1
 
 - Fix: a decoration (or other label, remove, format switch) picked from the suggestions sometimes did nothing, e.g. after picking a label with `/`. The suggestions now apply their edit directly, and it can be undone in one step.
