@@ -1,0 +1,44 @@
+name: Release
+
+# Pushing a v* tag publishes to the VS Code Marketplace and Open VSX and creates
+# a GitHub release. Running it manually is a dry run: build, test, check, package.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run compile
+      - run: npm test
+      - run: xvfb-run -a npm run test:integration
+      - name: Check tag, changelog and README images
+        run: node scripts/check-release.mjs "${{ github.ref_type == 'tag' && github.ref_name || '' }}"
+      - run: npx vsce package
+
+      - name: Publish to VS Code Marketplace
+        if: github.event_name == 'push'
+        run: npm run publish:vsce
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+      - name: Publish to Open VSX
+        if: github.event_name == 'push'
+        run: npm run publish:ovsx
+        env:
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}
+      - name: Create GitHub release
+        if: github.event_name == 'push'
+        run: gh release create "$GITHUB_REF_NAME" *.vsix --title "$GITHUB_REF_NAME" --notes-file release-notes.md
+        env:
+          GH_TOKEN: ${{ github.token }}
