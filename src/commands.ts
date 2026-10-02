@@ -7,29 +7,32 @@ import {
   setPrefix,
 } from "./conventions";
 import { applyPrefixEdit, findDocument, getTargetDocument } from "./target";
-import { isPrettified, setChangingLabel, setPrettified } from "./toolbar";
+import { isPrettified, setPrettified } from "./toolbar";
 
 export const Commands = {
   insertLabel: "conventionalComments.insertLabel",
   toggleFormat: "conventionalComments.toggleFormat",
   removeLabel: "conventionalComments.removeLabel",
   applyPrefix: "conventionalComments.applyPrefix",
+  setFormat: "conventionalComments.setFormat",
 } as const;
 
-/** Command ids of the comment editor buttons; must match scripts/manifest.mjs. */
-export const ButtonCommands = {
-  label: (label: string) => `conventionalComments.button.label.${label}`,
-  labelSelected: (label: string) => `conventionalComments.button.labelSelected.${label}`,
-  changeLabel: (label: string) => `conventionalComments.button.changeLabel.${label}`,
-  decoration: (decoration: string) => `conventionalComments.button.decoration.${decoration}`,
+/** Command ids of the header menu items; must match scripts/manifest.mjs. */
+export const MenuCommands = {
+  label: (label: string) => `conventionalComments.menu.label.${label}`,
+  labelSelected: (label: string) => `conventionalComments.menu.labelSelected.${label}`,
+  decoration: (decoration: string) => `conventionalComments.menu.decoration.${decoration}`,
   decorationSelected: (decoration: string) =>
-    `conventionalComments.button.decorationSelected.${decoration}`,
-  format: "conventionalComments.button.format",
-  formatSelected: "conventionalComments.button.formatSelected",
+    `conventionalComments.menu.decorationSelected.${decoration}`,
+  badge: "conventionalComments.menu.format.badge",
+  badgeSelected: "conventionalComments.menu.format.badgeSelected",
+  plain: "conventionalComments.menu.format.plain",
+  plainSelected: "conventionalComments.menu.format.plainSelected",
+  remove: "conventionalComments.menu.remove",
 };
 
 function resolveDocument(uri?: unknown): vscode.TextDocument | undefined {
-  // Buttons pass a CommentReply and palette invocations pass nothing; only
+  // Menu items pass a CommentThread and palette invocations pass nothing; only
   // completion items pass a document URI.
   const doc = typeof uri === "string" ? findDocument(uri) : getTargetDocument();
   if (!doc) {
@@ -44,23 +47,21 @@ function resolveDocument(uri?: unknown): vscode.TextDocument | undefined {
 async function applyPrefix(uri: unknown, label: string, decoration?: string): Promise<void> {
   const doc = resolveDocument(uri);
   if (!doc) return;
-  setChangingLabel(false);
   await applyPrefixEdit(doc, setPrefix(doc.getText(), label, decoration, isPrettified(doc)));
 }
 
-/** Label button: select it, or remove it when it is already selected. */
+/** Label menu item: select it, or remove it when it is already selected. */
 async function clickLabel(label: string): Promise<void> {
   const doc = resolveDocument();
   if (!doc) return;
   if (parsePrefix(doc.getText())?.label === label) {
-    setChangingLabel(false);
     await removeLabel();
   } else {
     await applyPrefix(undefined, label);
   }
 }
 
-/** Decoration button: toggle it on the current label. */
+/** Decoration menu item: toggle it on the current label. */
 async function clickDecoration(decoration: string): Promise<void> {
   const doc = resolveDocument();
   const current = doc && parsePrefix(doc.getText());
@@ -69,18 +70,23 @@ async function clickDecoration(decoration: string): Promise<void> {
   await applyPrefixEdit(doc, setPrefix(doc.getText(), current.label, next, current.prettified));
 }
 
-async function toggleFormat(uri?: unknown): Promise<void> {
+/** Use badge or plain text for the comment, rewriting an existing label. */
+async function setFormat(prettified: boolean, uri?: unknown): Promise<void> {
   const doc = resolveDocument(uri);
   if (!doc) return;
-  const prettified = !isPrettified(doc);
   const current = parsePrefix(doc.getText());
-  if (current) {
+  if (current && current.prettified !== prettified) {
     await applyPrefixEdit(
       doc,
       setPrefix(doc.getText(), current.label, current.decoration, prettified)
     );
   }
   setPrettified(doc, prettified);
+}
+
+async function toggleFormat(uri?: unknown): Promise<void> {
+  const doc = resolveDocument(uri);
+  if (doc) await setFormat(!isPrettified(doc), uri);
 }
 
 async function removeLabel(uri?: unknown): Promise<void> {
@@ -104,16 +110,19 @@ export function registerCommands(): vscode.Disposable[] {
     register(Commands.toggleFormat, toggleFormat),
     register(Commands.removeLabel, removeLabel),
     register(Commands.applyPrefix, applyPrefix),
+    register(Commands.setFormat, (uri: string, prettified: boolean) => setFormat(prettified, uri)),
     ...LABELS.flatMap(({ label }) => [
-      register(ButtonCommands.label(label), () => clickLabel(label)),
-      register(ButtonCommands.labelSelected(label), () => clickLabel(label)),
-      register(ButtonCommands.changeLabel(label), () => setChangingLabel(true)),
+      register(MenuCommands.label(label), () => clickLabel(label)),
+      register(MenuCommands.labelSelected(label), () => clickLabel(label)),
     ]),
     ...DECORATIONS.flatMap(({ label }) => [
-      register(ButtonCommands.decoration(label), () => clickDecoration(label)),
-      register(ButtonCommands.decorationSelected(label), () => clickDecoration(label)),
+      register(MenuCommands.decoration(label), () => clickDecoration(label)),
+      register(MenuCommands.decorationSelected(label), () => clickDecoration(label)),
     ]),
-    register(ButtonCommands.format, () => toggleFormat()),
-    register(ButtonCommands.formatSelected, () => toggleFormat()),
+    register(MenuCommands.badge, () => setFormat(true)),
+    register(MenuCommands.badgeSelected, () => setFormat(true)),
+    register(MenuCommands.plain, () => setFormat(false)),
+    register(MenuCommands.plainSelected, () => setFormat(false)),
+    register(MenuCommands.remove, () => removeLabel()),
   ];
 }

@@ -5,14 +5,14 @@ import { PrefixEdit, mapOffset } from "./conventions";
 export const COMMENT_SCHEME = "comment";
 
 // Comment inputs are exposed to extensions as regular text editors and become
-// `activeTextEditor` while focused. Clicking a comment action button moves
+// `activeTextEditor` while focused. Clicking the header menu can move
 // focus away briefly, so remember the last focused one instead of relying on
 // `activeTextEditor` at the time a command runs.
 
 let lastEditor: vscode.TextEditor | undefined;
 let lastDocument: vscode.TextDocument | undefined;
 
-const onDidChangeTargetEmitter = new vscode.EventEmitter<{ textChanged: boolean }>();
+const onDidChangeTargetEmitter = new vscode.EventEmitter<void>();
 /** Fires when the target comment changes, or its text does. */
 export const onDidChangeTarget = onDidChangeTargetEmitter.event;
 
@@ -25,7 +25,7 @@ function setTarget(editor: vscode.TextEditor | undefined): void {
   const changed = editor.document !== lastDocument;
   lastEditor = editor;
   lastDocument = editor.document;
-  if (changed) onDidChangeTargetEmitter.fire({ textChanged: true });
+  if (changed) onDidChangeTargetEmitter.fire();
 }
 
 export function getTargetDocument(): vscode.TextDocument | undefined {
@@ -47,13 +47,13 @@ export function trackCommentEditors(): vscode.Disposable[] {
     onDidChangeTargetEmitter,
     vscode.window.onDidChangeActiveTextEditor(setTarget),
     vscode.workspace.onDidChangeTextDocument((e) => {
-      if (e.document === lastDocument) onDidChangeTargetEmitter.fire({ textChanged: true });
+      if (e.document === lastDocument) onDidChangeTargetEmitter.fire();
     }),
     vscode.workspace.onDidCloseTextDocument((doc) => {
       if (doc !== lastDocument) return;
       lastEditor = undefined;
       lastDocument = undefined;
-      onDidChangeTargetEmitter.fire({ textChanged: true });
+      onDidChangeTargetEmitter.fire();
     }),
   ];
 }
