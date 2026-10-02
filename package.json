@@ -1,11 +1,16 @@
 {
   "name": "conventional-comments-vscode",
   "displayName": "Conventional Comments for PR Reviews",
-  "description": "Conventional Comments (conventionalcomments.org) for pull request review comments in VS Code, as plain text or badges.",
-  "version": "0.5.0",
+  "description": "Label PR review comments with Conventional Comments (praise, nitpick, issue…) as plain text or colored badges.",
+  "version": "1.0.0",
   "publisher": "jbrulmans",
   "license": "MIT",
   "icon": "images/icon.png",
+  "galleryBanner": {
+    "color": "#1E293B",
+    "theme": "dark"
+  },
+  "pricing": "Free",
   "repository": {
     "type": "git",
     "url": "https://github.com/jbrulmans/conventional-comments-vscode.git"
@@ -24,14 +29,28 @@
     "conventional comments",
     "code review",
     "pull request",
+    "pr review",
+    "review comments",
     "github",
     "gitlab",
-    "review comments",
-    "badges"
+    "labels",
+    "badges",
+    "nitpick",
+    "feedback"
   ],
   "activationEvents": [
     "onStartupFinished"
   ],
+  "extensionKind": [
+    "ui",
+    "workspace"
+  ],
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": true
+    },
+    "virtualWorkspaces": true
+  },
   "main": "./dist/extension.js",
   "contributes": {
     "commands": [
@@ -135,7 +154,9 @@
     "check-types": "tsc --noEmit",
     "test": "tsc -p tsconfig.test.json && node --test \"out/test/*.test.js\"",
     "package": "vsce package",
-    "test:integration": "npm run compile && tsc -p tsconfig.json --outDir out && vscode-test"
+    "test:integration": "npm run compile && tsc -p tsconfig.json --outDir out && vscode-test",
+    "publish:vsce": "vsce publish --packagePath *.vsix",
+    "publish:ovsx": "ovsx publish *.vsix"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.10",
@@ -145,6 +166,7 @@
     "@vscode/test-electron": "^3.1.0",
     "@vscode/vsce": "^3.0.0",
     "esbuild": "^0.24.0",
+    "ovsx": "^1.2.0",
     "typescript": "^5.6.0"
   }
 }

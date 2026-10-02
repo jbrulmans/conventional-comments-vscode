@@ -7,6 +7,10 @@ images/icon.svg
 tsconfig*.json
 **/*.map
 .gitignore
-scripts/**
 .vscode-test/**
 .vscode-test.mjs
+images/*.gif
+CONTRIBUTING.md
+SECURITY.md
+scripts/**
+release-notes.md
