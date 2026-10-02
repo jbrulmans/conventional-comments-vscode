@@ -2,7 +2,7 @@
   "name": "conventional-comments-vscode",
   "displayName": "Conventional Comments for PR Reviews",
   "description": "Conventional Comments (conventionalcomments.org) for pull request review comments in VS Code, as plain text or badges.",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "publisher": "jbrulmans",
   "license": "MIT",
   "icon": "images/icon.png",

@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.1
+
+- Fix: a decoration (or other label, remove, format switch) picked from the suggestions sometimes did nothing, e.g. after picking a label with `/`. The suggestions now apply their edit directly, and it can be undone in one step.
+
 ## 0.4.0
 
 - **Breaking:** labels follow conventionalcomments.org exactly. There's a space before the decorations (`suggestion (non-blocking):`), and badges are plain shields.io images without a link.
