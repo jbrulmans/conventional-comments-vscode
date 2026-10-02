@@ -2,7 +2,7 @@
   "name": "conventional-comments-vscode",
   "displayName": "Conventional Comments for PR Reviews",
   "description": "Conventional Comments (conventionalcomments.org) for pull request review comments in VS Code, as plain text or badges.",
-  "version": "0.4.2",
+  "version": "0.5.0",
   "publisher": "jbrulmans",
   "license": "MIT",
   "icon": "images/icon.png",
@@ -77,12 +77,12 @@
         {
           "command": "conventionalComments.header.badge",
           "group": "navigation@1",
-          "when": "config.conventionalComments.showHeaderButtons && conventionalComments.prettified"
+          "when": "config.conventionalComments.showHeaderButtons && conventionalComments.format == 'badge'"
         },
         {
           "command": "conventionalComments.header.plain",
           "group": "navigation@1",
-          "when": "config.conventionalComments.showHeaderButtons && !conventionalComments.prettified"
+          "when": "config.conventionalComments.showHeaderButtons && conventionalComments.format == 'plain'"
         }
       ],
       "commandPalette": [
@@ -107,10 +107,18 @@
     "configuration": {
       "title": "Conventional Comments",
       "properties": {
-        "conventionalComments.prettify": {
-          "type": "boolean",
-          "default": true,
-          "markdownDescription": "Insert labels as shields.io badges (rendered on GitHub/GitLab) instead of plain text like `suggestion (non-blocking):`."
+        "conventionalComments.defaultFormat": {
+          "type": "string",
+          "enum": [
+            "badge",
+            "plain"
+          ],
+          "enumDescriptions": [
+            "A shields.io badge, rendered as a colored image on GitHub/GitLab.",
+            "The plain spec prefix, e.g. `suggestion (non-blocking):`."
+          ],
+          "default": "badge",
+          "markdownDescription": "How new labels are written. Existing labels keep their format."
         },
         "conventionalComments.showHeaderButtons": {
           "type": "boolean",

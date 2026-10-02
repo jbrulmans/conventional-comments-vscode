@@ -7,7 +7,11 @@
 // shields.io badge instead of the plain prefix.
 // Kept free of `vscode` imports so it can be unit tested with plain Node.
 
-export interface Convention {
+/** How a label is written: a shields.io badge or the plain spec prefix. */
+export type Format = "badge" | "plain";
+
+/** A label or decoration from the spec. */
+export interface Term {
   label: string;
   desc: string;
   color: string;
@@ -15,7 +19,7 @@ export interface Convention {
   expressive?: boolean;
 }
 
-export const LABELS: Convention[] = [
+export const LABELS: Term[] = [
   { label: "praise", desc: "Highlights something positive. Be sincere.", color: "#28A745" },
   { label: "nitpick", desc: "Trivial, preference-based request. Non-blocking by nature.", color: "#F59E0B" },
   { label: "suggestion", desc: "Proposes an improvement. Explain what and why.", color: "#3B82F6" },
@@ -30,7 +34,7 @@ export const LABELS: Convention[] = [
   { label: "quibble", desc: "Like nitpick, without the nit.", color: "#A3A3A3", expressive: true },
 ];
 
-export const DECORATIONS: Convention[] = [
+export const DECORATIONS: Term[] = [
   { label: "non-blocking", desc: "Should not prevent the change from being accepted.", color: "#9CA3AF" },
   { label: "blocking", desc: "Should prevent the change from being accepted until resolved.", color: "#374151" },
   { label: "if-minor", desc: "Resolve only if the change is minor or trivial.", color: "#14B8A6" },
@@ -38,15 +42,17 @@ export const DECORATIONS: Convention[] = [
 
 const LABEL_PATTERN = LABELS.map((l) => l.label).join("|");
 
-export const PLAIN_CC_REGEX = new RegExp(
+const PLAIN_PREFIX_REGEX = new RegExp(
   `^\\s*(${LABEL_PATTERN})\\s*(?:\\(([^()\\n]*)\\))?:[ \\t]*`
 );
-export const BADGE_CC_REGEX = new RegExp(
+export const BADGE_PREFIX_REGEX = new RegExp(
   `^\\s*!\\[(${LABEL_PATTERN})\\s*(?:\\(([^()\\n]*)\\))?:?\\]\\(https://img\\.shields\\.io/badge/[^)\\s]*\\)[ \\t]*(?:\\r?\\n)?`
 );
 
-/** Matches a single decoration as offered for custom input. */
-export const DECORATION_REGEX = /^[\w-]+$/;
+/** A single custom decoration as typed in the picker. */
+export const CUSTOM_DECORATION_REGEX = /^[\w-]+$/;
+
+const NEUTRAL_COLOR = "#6B7280";
 
 function parseDecorations(raw: string | undefined): string[] {
   return (raw ?? "")
@@ -64,14 +70,14 @@ function hex(color: string): string {
 function badgeColor(decorations: string[]): string {
   const standard = decorations
     .map((d) => DECORATIONS.find((s) => s.label === d))
-    .filter((d): d is Convention => !!d);
+    .filter((d): d is Term => !!d);
   const color =
-    standard.find((d) => d.label === "blocking")?.color ?? standard[0]?.color ?? "#6B7280";
+    standard.find((d) => d.label === "blocking")?.color ?? standard[0]?.color ?? NEUTRAL_COLOR;
   return hex(color);
 }
 
 export function createBadgeUrl(label: string, decorations: string[] = []): string {
-  const labelColor = hex(LABELS.find((l) => l.label === label)?.color ?? "#6B7280");
+  const labelColor = hex(LABELS.find((l) => l.label === label)?.color ?? NEUTRAL_COLOR);
   // shields.io static badges use `-` and `_` as separators; escape them by doubling.
   const encode = (str: string) =>
     encodeURIComponent(str.replace(/-/g, "--").replace(/_/g, "__"));
@@ -89,43 +95,43 @@ export function createBadgeUrl(label: string, decorations: string[] = []): strin
 export interface ParsedPrefix {
   label: string;
   decorations: string[];
-  prettified: boolean;
-  /** Length of the matched prefix, including trailing whitespace. */
-  length: number;
+  format: Format;
+  /** Offset right after the prefix, including trailing whitespace. */
+  end: number;
 }
 
 export function parsePrefix(text: string): ParsedPrefix | undefined {
-  const plain = text.match(PLAIN_CC_REGEX);
+  const plain = text.match(PLAIN_PREFIX_REGEX);
   if (plain) {
     return {
       label: plain[1],
       decorations: parseDecorations(plain[2]),
-      prettified: false,
-      length: plain[0].length,
+      format: "plain",
+      end: plain[0].length,
     };
   }
-  const badge = text.match(BADGE_CC_REGEX);
+  const badge = text.match(BADGE_PREFIX_REGEX);
   if (badge) {
     return {
       label: badge[1],
       decorations: parseDecorations(badge[2]),
-      prettified: true,
-      length: badge[0].length,
+      format: "badge",
+      end: badge[0].length,
     };
   }
   return undefined;
 }
 
 /** The canonical prefix without trailing whitespace, e.g. `suggestion (non-blocking):`. */
-export function formatLabel(label: string, decorations: string[] = []): string {
+export function formatPrefix(label: string, decorations: string[] = []): string {
   return `${label}${decorations.length ? ` (${decorations.join(",")})` : ""}:`;
 }
 
-export function buildPrefix(label: string, decorations: string[], prettified: boolean): string {
-  if (prettified) {
-    return `![${formatLabel(label, decorations)}](${createBadgeUrl(label, decorations)})\n`;
+export function buildPrefix(label: string, decorations: string[], format: Format): string {
+  if (format === "badge") {
+    return `![${formatPrefix(label, decorations)}](${createBadgeUrl(label, decorations)})\n`;
   }
-  return `${formatLabel(label, decorations)} `;
+  return `${formatPrefix(label, decorations)} `;
 }
 
 /** Replace the text in [0, end) with `text`. */
@@ -134,37 +140,39 @@ export interface PrefixEdit {
   text: string;
 }
 
-/** Replaces any existing plain/badge prefix with the new one and keeps the subject. */
-export function setPrefix(
-  current: string,
+/** Edit that replaces any existing plain/badge prefix with the given one, keeping the subject. */
+export function prefixEdit(
+  text: string,
   label: string,
   decorations: string[],
-  prettified: boolean
+  format: Format
 ): PrefixEdit {
-  const existing = parsePrefix(current);
-  let end = existing?.length ?? 0;
-  if (prettified) {
+  let end = parsePrefix(text)?.end ?? 0;
+  if (format === "badge") {
     // Badge form puts the subject on its own line, trimmed.
-    end += current.substring(end).length - current.substring(end).trimStart().length;
+    end += text.substring(end).length - text.substring(end).trimStart().length;
   }
-  return { end, text: buildPrefix(label, decorations, prettified) };
+  return { end, text: buildPrefix(label, decorations, format) };
 }
 
-export function removePrefix(current: string): PrefixEdit | undefined {
-  const existing = parsePrefix(current);
-  return existing ? { end: existing.length, text: "" } : undefined;
+/** Edit that removes the prefix, if there is one. */
+export function removalEdit(text: string): PrefixEdit | undefined {
+  const existing = parsePrefix(text);
+  return existing ? { end: existing.end, text: "" } : undefined;
 }
 
-export function togglePrefixFormat(current: string): PrefixEdit | undefined {
-  const existing = parsePrefix(current);
-  if (!existing) {
-    return undefined;
-  }
-  return setPrefix(current, existing.label, existing.decorations, !existing.prettified);
+export function otherFormat(format: Format): Format {
+  return format === "badge" ? "plain" : "badge";
 }
 
-export function applyEdit(current: string, edit: PrefixEdit): string {
-  return edit.text + current.substring(edit.end);
+/** Edit that rewrites the prefix in the given format, if there is one. */
+export function reformatEdit(text: string, format: Format): PrefixEdit | undefined {
+  const existing = parsePrefix(text);
+  return existing && prefixEdit(text, existing.label, existing.decorations, format);
+}
+
+export function applyToText(text: string, edit: PrefixEdit): string {
+  return edit.text + text.substring(edit.end);
 }
 
 /** Where a cursor at `offset` ends up after applying `edit`. */

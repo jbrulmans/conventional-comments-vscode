@@ -1,4 +1,4 @@
 {
   "extends": "./tsconfig.json",
-  "include": ["src/conventions.ts", "src/test/*.ts"]
+  "include": ["src/conventions.ts", "src/pickerItems.ts", "src/test/*.ts"]
 }

@@ -1,8 +1,16 @@
 import * as vscode from "vscode";
-import { parsePrefix, removePrefix, setPrefix } from "./conventions";
-import { isPrettified, setPrettified } from "./format";
+import {
+  PrefixEdit,
+  otherFormat,
+  parsePrefix,
+  prefixEdit,
+  reformatEdit,
+  removalEdit,
+} from "./conventions";
+import { applyPrefixEdit } from "./edits";
+import { formatOf, rememberFormat } from "./format";
 import { pickConventionalComment } from "./picker";
-import { applyPrefixEdit, getTargetDocument } from "./target";
+import { getTargetDocument } from "./target";
 
 export const Commands = {
   insertLabel: "conventionalComments.insertLabel",
@@ -13,8 +21,8 @@ export const Commands = {
   headerPlain: "conventionalComments.header.plain",
 } as const;
 
-/** The comment box the user is in, or last typed in. */
-function resolveDocument(): vscode.TextDocument | undefined {
+/** The comment box the user is in, or last typed in; tells the user when there is none. */
+function requireTargetDocument(): vscode.TextDocument | undefined {
   const doc = getTargetDocument();
   if (!doc) {
     vscode.window.showInformationMessage(
@@ -24,56 +32,56 @@ function resolveDocument(): vscode.TextDocument | undefined {
   return doc;
 }
 
-async function insertLabel(): Promise<void> {
-  const doc = resolveDocument();
-  if (!doc) return;
-  const result = await pickConventionalComment(parsePrefix(doc.getText()));
-  if (result?.kind === "remove") {
-    await removeLabel();
-  } else if (result) {
-    const decorations = result.decoration ? [result.decoration] : [];
-    await applyPrefixEdit(
-      doc,
-      setPrefix(doc.getText(), result.label, decorations, isPrettified(doc))
-    );
-  }
-}
+type EditFor = (doc: vscode.TextDocument) => PrefixEdit | undefined | Promise<PrefixEdit | undefined>;
 
-/** Switch the comment between badge and plain text, rewriting an existing label. */
-async function toggleFormat(): Promise<void> {
-  const doc = resolveDocument();
+/** Computes an edit for the target comment and applies it. */
+async function editTarget(editFor: EditFor): Promise<void> {
+  const doc = requireTargetDocument();
   if (!doc) return;
-  const prettified = !isPrettified(doc);
-  const current = parsePrefix(doc.getText());
-  if (current) {
-    await applyPrefixEdit(
-      doc,
-      setPrefix(doc.getText(), current.label, current.decorations, prettified)
-    );
-  }
-  setPrettified(doc, prettified);
-}
-
-async function removeLabel(): Promise<void> {
-  const doc = resolveDocument();
-  if (!doc) return;
-  const edit = removePrefix(doc.getText());
+  const edit = await editFor(doc);
   if (edit) await applyPrefixEdit(doc, edit);
 }
 
+function insertLabel(): Promise<void> {
+  return editTarget(async (doc) => {
+    const result = await pickConventionalComment(parsePrefix(doc.getText()));
+    if (result?.kind === "remove") return removalEdit(doc.getText());
+    if (result) return prefixEdit(doc.getText(), result.label, result.decorations, formatOf(doc));
+    return undefined;
+  });
+}
+
+/** Switches the comment between badge and plain text, rewriting an existing label. */
+function toggleFormat(): Promise<void> {
+  return editTarget((doc) => {
+    const format = otherFormat(formatOf(doc));
+    rememberFormat(doc, format);
+    return reformatEdit(doc.getText(), format);
+  });
+}
+
+function removeLabel(): Promise<void> {
+  return editTarget((doc) => removalEdit(doc.getText()));
+}
+
 async function configureKeybinding(): Promise<void> {
-  await vscode.commands.executeCommand("workbench.action.openGlobalKeybindings", Commands.insertLabel);
+  await vscode.commands.executeCommand(
+    "workbench.action.openGlobalKeybindings",
+    Commands.insertLabel
+  );
 }
 
 export function registerCommands(): vscode.Disposable[] {
-  const register = vscode.commands.registerCommand;
+  // Arguments are ignored: header buttons pass the comment thread, which can't
+  // be mapped to its input box, so every command acts on the target comment.
+  const register = (id: string, handler: () => Promise<void>) =>
+    vscode.commands.registerCommand(id, () => handler());
   return [
     register(Commands.insertLabel, insertLabel),
-    register(Commands.toggleFormat, () => toggleFormat()),
-    register(Commands.removeLabel, () => removeLabel()),
+    register(Commands.toggleFormat, toggleFormat),
+    register(Commands.removeLabel, removeLabel),
     register(Commands.configureKeybinding, configureKeybinding),
-    // Header buttons pass the comment thread, which can't be mapped to its input.
-    register(Commands.headerBadge, () => toggleFormat()),
-    register(Commands.headerPlain, () => toggleFormat()),
+    register(Commands.headerBadge, toggleFormat),
+    register(Commands.headerPlain, toggleFormat),
   ];
 }

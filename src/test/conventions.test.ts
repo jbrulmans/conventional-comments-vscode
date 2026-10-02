@@ -1,21 +1,23 @@
 import { strict as assert } from "node:assert";
 import { describe, it } from "node:test";
 import {
-  BADGE_CC_REGEX,
+  BADGE_PREFIX_REGEX,
+  Format,
   LABELS,
-  applyEdit,
+  applyToText,
   buildPrefix,
   createBadgeUrl,
-  formatLabel,
+  formatPrefix,
   mapOffset,
   parsePrefix,
-  removePrefix,
-  setPrefix,
-  togglePrefixFormat,
+  removalEdit,
+  prefixEdit,
+  otherFormat,
+  reformatEdit,
 } from "../conventions";
 
-const set = (text: string, label: string, decorations: string[] = [], prettified = false) =>
-  applyEdit(text, setPrefix(text, label, decorations, prettified));
+const set = (text: string, label: string, decorations: string[] = [], format: Format = "plain") =>
+  applyToText(text, prefixEdit(text, label, decorations, format));
 
 describe("labels", () => {
   it("has the spec's standard and expressive labels", () => {
@@ -30,18 +32,18 @@ describe("labels", () => {
   });
 });
 
-describe("formatLabel", () => {
+describe("formatPrefix", () => {
   it("follows `<label> [decorations]:`", () => {
-    assert.equal(formatLabel("praise"), "praise:");
-    assert.equal(formatLabel("suggestion", ["non-blocking"]), "suggestion (non-blocking):");
-    assert.equal(formatLabel("issue", ["test", "if-minor"]), "issue (test,if-minor):");
+    assert.equal(formatPrefix("praise"), "praise:");
+    assert.equal(formatPrefix("suggestion", ["non-blocking"]), "suggestion (non-blocking):");
+    assert.equal(formatPrefix("issue", ["test", "if-minor"]), "issue (test,if-minor):");
   });
 });
 
 describe("badges", () => {
   it("builds a label-only badge", () => {
     assert.equal(
-      buildPrefix("praise", [], true),
+      buildPrefix("praise", [], "badge"),
       "![praise:](https://img.shields.io/badge/praise-28A745)\n"
     );
   });
@@ -61,10 +63,10 @@ describe("badges", () => {
     assert.match(createBadgeUrl("issue", ["security"]), /security-6B7280\?labelColor=/);
   });
 
-  it("is a plain image without a link, matching BADGE_CC_REGEX", () => {
-    const badge = buildPrefix("issue", ["blocking"], true);
+  it("is a plain image without a link, matching BADGE_PREFIX_REGEX", () => {
+    const badge = buildPrefix("issue", ["blocking"], "badge");
     assert.ok(badge.startsWith("![issue (blocking):]("));
-    const m = badge.match(BADGE_CC_REGEX);
+    const m = badge.match(BADGE_PREFIX_REGEX);
     assert.deepEqual([m?.[1], m?.[2]], ["issue", "blocking"]);
   });
 });
@@ -79,8 +81,8 @@ describe("parsePrefix", () => {
     assert.deepEqual(parsePrefix("nitpick (if-minor): rename this"), {
       label: "nitpick",
       decorations: ["if-minor"],
-      prettified: false,
-      length: "nitpick (if-minor): ".length,
+      format: "plain",
+      end: "nitpick (if-minor): ".length,
     });
   });
 
@@ -90,14 +92,14 @@ describe("parsePrefix", () => {
   });
 
   it("parses badge prefixes", () => {
-    const parsed = parsePrefix(buildPrefix("todo", ["security"], true) + "add tests");
+    const parsed = parsePrefix(buildPrefix("todo", ["security"], "badge") + "add tests");
     assert.equal(parsed?.label, "todo");
     assert.deepEqual(parsed?.decorations, ["security"]);
-    assert.equal(parsed?.prettified, true);
+    assert.equal(parsed?.format, "badge");
   });
 });
 
-describe("setPrefix", () => {
+describe("prefixEdit", () => {
   it("adds a plain prefix", () => {
     assert.equal(set("use a map here", "suggestion"), "suggestion: use a map here");
   });
@@ -119,37 +121,41 @@ describe("setPrefix", () => {
 
   it("puts the subject on its own line in badge form", () => {
     assert.equal(
-      set("question:   why?", "question", [], true),
-      buildPrefix("question", [], true) + "why?"
+      set("question:   why?", "question", [], "badge"),
+      buildPrefix("question", [], "badge") + "why?"
     );
   });
 });
 
-describe("removePrefix", () => {
+describe("removalEdit", () => {
   it("removes plain and badge prefixes", () => {
     const plain = "chore: bump deps";
-    assert.equal(applyEdit(plain, removePrefix(plain)!), "bump deps");
-    const badge = buildPrefix("chore", ["if-minor"], true) + "bump deps";
-    assert.equal(applyEdit(badge, removePrefix(badge)!), "bump deps");
+    assert.equal(applyToText(plain, removalEdit(plain)!), "bump deps");
+    const badge = buildPrefix("chore", ["if-minor"], "badge") + "bump deps";
+    assert.equal(applyToText(badge, removalEdit(badge)!), "bump deps");
   });
 
   it("does nothing without a prefix", () => {
-    assert.equal(removePrefix("bump deps"), undefined);
+    assert.equal(removalEdit("bump deps"), undefined);
   });
 });
 
-describe("togglePrefixFormat", () => {
+describe("reformatEdit", () => {
   it("round-trips between plain and badge", () => {
     const plain = "thought (non-blocking): maybe later";
-    const badge = applyEdit(plain, togglePrefixFormat(plain)!);
-    assert.equal(badge, buildPrefix("thought", ["non-blocking"], true) + "maybe later");
-    assert.equal(applyEdit(badge, togglePrefixFormat(badge)!), plain);
+    const badge = applyToText(plain, reformatEdit(plain, "badge")!);
+    assert.equal(badge, buildPrefix("thought", ["non-blocking"], "badge") + "maybe later");
+    assert.equal(applyToText(badge, reformatEdit(badge, otherFormat("badge"))!), plain);
+  });
+
+  it("does nothing without a prefix", () => {
+    assert.equal(reformatEdit("hello", "badge"), undefined);
   });
 });
 
 describe("mapOffset", () => {
   it("shifts cursors after the prefix and clamps cursors inside it", () => {
-    const edit = setPrefix("issue: abc", "suggestion", [], false);
+    const edit = prefixEdit("issue: abc", "suggestion", [], "plain");
     assert.equal(mapOffset("issue: ab".length, edit), "suggestion: ab".length);
     assert.equal(mapOffset(2, edit), "suggestion: ".length);
   });

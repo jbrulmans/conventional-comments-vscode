@@ -1,32 +1,34 @@
 import * as vscode from "vscode";
-import { parsePrefix } from "./conventions";
+import { Format, parsePrefix } from "./conventions";
 import { COMMENT_SCHEME, getTargetDocument, onDidChangeTarget } from "./target";
 
 // Tracks whether each comment uses the badge or plain text format, and exposes
 // the focused comment's format as a context key for the header toggle icon.
 
-const prettifiedByUri = new Map<string, boolean>();
+const formatByUri = new Map<string, Format>();
 
-/** Format for a comment: its existing prefix wins, then the toggle, then the setting. */
-export function isPrettified(doc: vscode.TextDocument): boolean {
+function defaultFormat(): Format {
+  return vscode.workspace
+    .getConfiguration("conventionalComments")
+    .get<Format>("defaultFormat", "badge");
+}
+
+/** A comment's format: its existing prefix wins, then the remembered one, then the setting. */
+export function formatOf(doc: vscode.TextDocument): Format {
   return (
-    parsePrefix(doc.getText())?.prettified ??
-    prettifiedByUri.get(doc.uri.toString()) ??
-    vscode.workspace.getConfiguration("conventionalComments").get<boolean>("prettify", true)
+    parsePrefix(doc.getText())?.format ?? formatByUri.get(doc.uri.toString()) ?? defaultFormat()
   );
 }
 
-export function setPrettified(doc: vscode.TextDocument, prettified: boolean): void {
-  prettifiedByUri.set(doc.uri.toString(), prettified);
+export function rememberFormat(doc: vscode.TextDocument, format: Format): void {
+  formatByUri.set(doc.uri.toString(), format);
   updateContext();
 }
 
 function updateContext(): void {
   const doc = getTargetDocument();
-  const prettified = doc
-    ? isPrettified(doc)
-    : vscode.workspace.getConfiguration("conventionalComments").get<boolean>("prettify", true);
-  vscode.commands.executeCommand("setContext", "conventionalComments.prettified", prettified);
+  const format = doc ? formatOf(doc) : defaultFormat();
+  vscode.commands.executeCommand("setContext", "conventionalComments.format", format);
 }
 
 export function registerFormatState(): vscode.Disposable[] {
@@ -38,11 +40,11 @@ export function registerFormatState(): vscode.Disposable[] {
     vscode.workspace.onDidChangeTextDocument(({ document }) => {
       if (document.uri.scheme !== COMMENT_SCHEME) return;
       const prefix = parsePrefix(document.getText());
-      if (prefix) prettifiedByUri.set(document.uri.toString(), prefix.prettified);
+      if (prefix) formatByUri.set(document.uri.toString(), prefix.format);
     }),
-    vscode.workspace.onDidCloseTextDocument((doc) => prettifiedByUri.delete(doc.uri.toString())),
+    vscode.workspace.onDidCloseTextDocument((doc) => formatByUri.delete(doc.uri.toString())),
     vscode.workspace.onDidChangeConfiguration((e) => {
-      if (e.affectsConfiguration("conventionalComments.prettify")) updateContext();
+      if (e.affectsConfiguration("conventionalComments.defaultFormat")) updateContext();
     }),
   ];
 }
