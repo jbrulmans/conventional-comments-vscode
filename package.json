@@ -2,7 +2,7 @@
   "name": "conventional-comments-vscode",
   "displayName": "Conventional Comments for PR Reviews",
   "description": "Add Conventional Comments labels (praise, nitpick, suggestion, issue, ...) and decorations to pull request review comments in VS Code.",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "publisher": "jbrulmans",
   "license": "MIT",
   "icon": "images/icon.png",
@@ -32,11 +32,14 @@
     "onStartupFinished"
   ],
   "main": "./dist/extension.js",
+  "enabledApiProposals": [
+    "contribCommentEditorActionsMenu"
+  ],
   "contributes": {
     "commands": [
       {
         "command": "conventionalComments.insertLabel",
-        "title": "Insert Label…",
+        "title": "Insert Label",
         "category": "Conventional Comments"
       },
       {
@@ -48,14 +51,427 @@
         "command": "conventionalComments.removeLabel",
         "title": "Remove Label",
         "category": "Conventional Comments"
+      },
+      {
+        "command": "conventionalComments.button.label.praise",
+        "title": "praise"
+      },
+      {
+        "command": "conventionalComments.button.labelSelected.praise",
+        "title": "✓ praise"
+      },
+      {
+        "command": "conventionalComments.button.changeLabel.praise",
+        "title": "praise ›"
+      },
+      {
+        "command": "conventionalComments.button.label.nitpick",
+        "title": "nitpick"
+      },
+      {
+        "command": "conventionalComments.button.labelSelected.nitpick",
+        "title": "✓ nitpick"
+      },
+      {
+        "command": "conventionalComments.button.changeLabel.nitpick",
+        "title": "nitpick ›"
+      },
+      {
+        "command": "conventionalComments.button.label.suggestion",
+        "title": "suggestion"
+      },
+      {
+        "command": "conventionalComments.button.labelSelected.suggestion",
+        "title": "✓ suggestion"
+      },
+      {
+        "command": "conventionalComments.button.changeLabel.suggestion",
+        "title": "suggestion ›"
+      },
+      {
+        "command": "conventionalComments.button.label.todo",
+        "title": "todo"
+      },
+      {
+        "command": "conventionalComments.button.labelSelected.todo",
+        "title": "✓ todo"
+      },
+      {
+        "command": "conventionalComments.button.changeLabel.todo",
+        "title": "todo ›"
+      },
+      {
+        "command": "conventionalComments.button.label.issue",
+        "title": "issue"
+      },
+      {
+        "command": "conventionalComments.button.labelSelected.issue",
+        "title": "✓ issue"
+      },
+      {
+        "command": "conventionalComments.button.changeLabel.issue",
+        "title": "issue ›"
+      },
+      {
+        "command": "conventionalComments.button.label.question",
+        "title": "question"
+      },
+      {
+        "command": "conventionalComments.button.labelSelected.question",
+        "title": "✓ question"
+      },
+      {
+        "command": "conventionalComments.button.changeLabel.question",
+        "title": "question ›"
+      },
+      {
+        "command": "conventionalComments.button.label.thought",
+        "title": "thought"
+      },
+      {
+        "command": "conventionalComments.button.labelSelected.thought",
+        "title": "✓ thought"
+      },
+      {
+        "command": "conventionalComments.button.changeLabel.thought",
+        "title": "thought ›"
+      },
+      {
+        "command": "conventionalComments.button.label.chore",
+        "title": "chore"
+      },
+      {
+        "command": "conventionalComments.button.labelSelected.chore",
+        "title": "✓ chore"
+      },
+      {
+        "command": "conventionalComments.button.changeLabel.chore",
+        "title": "chore ›"
+      },
+      {
+        "command": "conventionalComments.button.decoration.non-blocking",
+        "title": "non-blocking"
+      },
+      {
+        "command": "conventionalComments.button.decorationSelected.non-blocking",
+        "title": "✓ non-blocking"
+      },
+      {
+        "command": "conventionalComments.button.decoration.blocking",
+        "title": "blocking"
+      },
+      {
+        "command": "conventionalComments.button.decorationSelected.blocking",
+        "title": "✓ blocking"
+      },
+      {
+        "command": "conventionalComments.button.decoration.if-minor",
+        "title": "if-minor"
+      },
+      {
+        "command": "conventionalComments.button.decorationSelected.if-minor",
+        "title": "✓ if-minor"
+      },
+      {
+        "command": "conventionalComments.button.format",
+        "title": "badge"
+      },
+      {
+        "command": "conventionalComments.button.formatSelected",
+        "title": "✓ badge"
       }
     ],
     "menus": {
-      "comments/commentThread/context": [
+      "comments/comment/editorActions": [
         {
-          "command": "conventionalComments.insertLabel",
-          "group": "inline@0",
-          "when": "config.conventionalComments.showCommentButton && commentController =~ /github|gitlab/"
+          "command": "conventionalComments.button.label.praise",
+          "group": "1_label@0",
+          "when": "config.conventionalComments.showButtons && (!conventionalComments.label || conventionalComments.changingLabel && conventionalComments.label != 'praise')"
+        },
+        {
+          "command": "conventionalComments.button.labelSelected.praise",
+          "group": "1_label@0",
+          "when": "config.conventionalComments.showButtons && conventionalComments.changingLabel && conventionalComments.label == 'praise'"
+        },
+        {
+          "command": "conventionalComments.button.changeLabel.praise",
+          "group": "1_label@99",
+          "when": "config.conventionalComments.showButtons && !conventionalComments.changingLabel && conventionalComments.label == 'praise'"
+        },
+        {
+          "command": "conventionalComments.button.label.nitpick",
+          "group": "1_label@1",
+          "when": "config.conventionalComments.showButtons && (!conventionalComments.label || conventionalComments.changingLabel && conventionalComments.label != 'nitpick')"
+        },
+        {
+          "command": "conventionalComments.button.labelSelected.nitpick",
+          "group": "1_label@1",
+          "when": "config.conventionalComments.showButtons && conventionalComments.changingLabel && conventionalComments.label == 'nitpick'"
+        },
+        {
+          "command": "conventionalComments.button.changeLabel.nitpick",
+          "group": "1_label@99",
+          "when": "config.conventionalComments.showButtons && !conventionalComments.changingLabel && conventionalComments.label == 'nitpick'"
+        },
+        {
+          "command": "conventionalComments.button.label.suggestion",
+          "group": "1_label@2",
+          "when": "config.conventionalComments.showButtons && (!conventionalComments.label || conventionalComments.changingLabel && conventionalComments.label != 'suggestion')"
+        },
+        {
+          "command": "conventionalComments.button.labelSelected.suggestion",
+          "group": "1_label@2",
+          "when": "config.conventionalComments.showButtons && conventionalComments.changingLabel && conventionalComments.label == 'suggestion'"
+        },
+        {
+          "command": "conventionalComments.button.changeLabel.suggestion",
+          "group": "1_label@99",
+          "when": "config.conventionalComments.showButtons && !conventionalComments.changingLabel && conventionalComments.label == 'suggestion'"
+        },
+        {
+          "command": "conventionalComments.button.label.todo",
+          "group": "1_label@3",
+          "when": "config.conventionalComments.showButtons && (!conventionalComments.label || conventionalComments.changingLabel && conventionalComments.label != 'todo')"
+        },
+        {
+          "command": "conventionalComments.button.labelSelected.todo",
+          "group": "1_label@3",
+          "when": "config.conventionalComments.showButtons && conventionalComments.changingLabel && conventionalComments.label == 'todo'"
+        },
+        {
+          "command": "conventionalComments.button.changeLabel.todo",
+          "group": "1_label@99",
+          "when": "config.conventionalComments.showButtons && !conventionalComments.changingLabel && conventionalComments.label == 'todo'"
+        },
+        {
+          "command": "conventionalComments.button.label.issue",
+          "group": "1_label@4",
+          "when": "config.conventionalComments.showButtons && (!conventionalComments.label || conventionalComments.changingLabel && conventionalComments.label != 'issue')"
+        },
+        {
+          "command": "conventionalComments.button.labelSelected.issue",
+          "group": "1_label@4",
+          "when": "config.conventionalComments.showButtons && conventionalComments.changingLabel && conventionalComments.label == 'issue'"
+        },
+        {
+          "command": "conventionalComments.button.changeLabel.issue",
+          "group": "1_label@99",
+          "when": "config.conventionalComments.showButtons && !conventionalComments.changingLabel && conventionalComments.label == 'issue'"
+        },
+        {
+          "command": "conventionalComments.button.label.question",
+          "group": "1_label@5",
+          "when": "config.conventionalComments.showButtons && (!conventionalComments.label || conventionalComments.changingLabel && conventionalComments.label != 'question')"
+        },
+        {
+          "command": "conventionalComments.button.labelSelected.question",
+          "group": "1_label@5",
+          "when": "config.conventionalComments.showButtons && conventionalComments.changingLabel && conventionalComments.label == 'question'"
+        },
+        {
+          "command": "conventionalComments.button.changeLabel.question",
+          "group": "1_label@99",
+          "when": "config.conventionalComments.showButtons && !conventionalComments.changingLabel && conventionalComments.label == 'question'"
+        },
+        {
+          "command": "conventionalComments.button.label.thought",
+          "group": "1_label@6",
+          "when": "config.conventionalComments.showButtons && (!conventionalComments.label || conventionalComments.changingLabel && conventionalComments.label != 'thought')"
+        },
+        {
+          "command": "conventionalComments.button.labelSelected.thought",
+          "group": "1_label@6",
+          "when": "config.conventionalComments.showButtons && conventionalComments.changingLabel && conventionalComments.label == 'thought'"
+        },
+        {
+          "command": "conventionalComments.button.changeLabel.thought",
+          "group": "1_label@99",
+          "when": "config.conventionalComments.showButtons && !conventionalComments.changingLabel && conventionalComments.label == 'thought'"
+        },
+        {
+          "command": "conventionalComments.button.label.chore",
+          "group": "1_label@7",
+          "when": "config.conventionalComments.showButtons && (!conventionalComments.label || conventionalComments.changingLabel && conventionalComments.label != 'chore')"
+        },
+        {
+          "command": "conventionalComments.button.labelSelected.chore",
+          "group": "1_label@7",
+          "when": "config.conventionalComments.showButtons && conventionalComments.changingLabel && conventionalComments.label == 'chore'"
+        },
+        {
+          "command": "conventionalComments.button.changeLabel.chore",
+          "group": "1_label@99",
+          "when": "config.conventionalComments.showButtons && !conventionalComments.changingLabel && conventionalComments.label == 'chore'"
+        },
+        {
+          "command": "conventionalComments.button.decoration.non-blocking",
+          "group": "2_decoration@0",
+          "when": "config.conventionalComments.showButtons && conventionalComments.label && !conventionalComments.changingLabel && conventionalComments.decoration != 'non-blocking'"
+        },
+        {
+          "command": "conventionalComments.button.decorationSelected.non-blocking",
+          "group": "2_decoration@0",
+          "when": "config.conventionalComments.showButtons && conventionalComments.label && !conventionalComments.changingLabel && conventionalComments.decoration == 'non-blocking'"
+        },
+        {
+          "command": "conventionalComments.button.decoration.blocking",
+          "group": "2_decoration@1",
+          "when": "config.conventionalComments.showButtons && conventionalComments.label && !conventionalComments.changingLabel && conventionalComments.decoration != 'blocking'"
+        },
+        {
+          "command": "conventionalComments.button.decorationSelected.blocking",
+          "group": "2_decoration@1",
+          "when": "config.conventionalComments.showButtons && conventionalComments.label && !conventionalComments.changingLabel && conventionalComments.decoration == 'blocking'"
+        },
+        {
+          "command": "conventionalComments.button.decoration.if-minor",
+          "group": "2_decoration@2",
+          "when": "config.conventionalComments.showButtons && conventionalComments.label && !conventionalComments.changingLabel && conventionalComments.decoration != 'if-minor'"
+        },
+        {
+          "command": "conventionalComments.button.decorationSelected.if-minor",
+          "group": "2_decoration@2",
+          "when": "config.conventionalComments.showButtons && conventionalComments.label && !conventionalComments.changingLabel && conventionalComments.decoration == 'if-minor'"
+        },
+        {
+          "command": "conventionalComments.button.format",
+          "group": "3_format",
+          "when": "config.conventionalComments.showButtons && !conventionalComments.prettified"
+        },
+        {
+          "command": "conventionalComments.button.formatSelected",
+          "group": "3_format",
+          "when": "config.conventionalComments.showButtons && conventionalComments.prettified"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "conventionalComments.button.label.praise",
+          "when": "false"
+        },
+        {
+          "command": "conventionalComments.button.labelSelected.praise",
+          "when": "false"
+        },
+        {
+          "command": "conventionalComments.button.changeLabel.praise",
+          "when": "false"
+        },
+        {
+          "command": "conventionalComments.button.label.nitpick",
+          "when": "false"
+        },
+        {
+          "command": "conventionalComments.button.labelSelected.nitpick",
+          "when": "false"
+        },
+        {
+          "command": "conventionalComments.button.changeLabel.nitpick",
+          "when": "false"
+        },
+        {
+          "command": "conventionalComments.button.label.suggestion",
+          "when": "false"
+        },
+        {
+          "command": "conventionalComments.button.labelSelected.suggestion",
+          "when": "false"
+        },
+        {
+          "command": "conventionalComments.button.changeLabel.suggestion",
+          "when": "false"
+        },
+        {
+          "command": "conventionalComments.button.label.todo",
+          "when": "false"
+        },
+        {
+          "command": "conventionalComments.button.labelSelected.todo",
+          "when": "false"
+        },
+        {
+          "command": "conventionalComments.button.changeLabel.todo",
+          "when": "false"
+        },
+        {
+          "command": "conventionalComments.button.label.issue",
+          "when": "false"
+        },
+        {
+          "command": "conventionalComments.button.labelSelected.issue",
+          "when": "false"
+        },
+        {
+          "command": "conventionalComments.button.changeLabel.issue",
+          "when": "false"
+        },
+        {
+          "command": "conventionalComments.button.label.question",
+          "when": "false"
+        },
+        {
+          "command": "conventionalComments.button.labelSelected.question",
+          "when": "false"
+        },
+        {
+          "command": "conventionalComments.button.changeLabel.question",
+          "when": "false"
+        },
+        {
+          "command": "conventionalComments.button.label.thought",
+          "when": "false"
+        },
+        {
+          "command": "conventionalComments.button.labelSelected.thought",
+          "when": "false"
+        },
+        {
+          "command": "conventionalComments.button.changeLabel.thought",
+          "when": "false"
+        },
+        {
+          "command": "conventionalComments.button.label.chore",
+          "when": "false"
+        },
+        {
+          "command": "conventionalComments.button.labelSelected.chore",
+          "when": "false"
+        },
+        {
+          "command": "conventionalComments.button.changeLabel.chore",
+          "when": "false"
+        },
+        {
+          "command": "conventionalComments.button.decoration.non-blocking",
+          "when": "false"
+        },
+        {
+          "command": "conventionalComments.button.decorationSelected.non-blocking",
+          "when": "false"
+        },
+        {
+          "command": "conventionalComments.button.decoration.blocking",
+          "when": "false"
+        },
+        {
+          "command": "conventionalComments.button.decorationSelected.blocking",
+          "when": "false"
+        },
+        {
+          "command": "conventionalComments.button.decoration.if-minor",
+          "when": "false"
+        },
+        {
+          "command": "conventionalComments.button.decorationSelected.if-minor",
+          "when": "false"
+        },
+        {
+          "command": "conventionalComments.button.format",
+          "when": "false"
+        },
+        {
+          "command": "conventionalComments.button.formatSelected",
+          "when": "false"
         }
       ]
     },
@@ -75,10 +491,10 @@
           "default": true,
           "markdownDescription": "Insert labels as shields.io badges (rendered on GitHub/GitLab) instead of plain text like `suggestion(non-blocking):`."
         },
-        "conventionalComments.showCommentButton": {
+        "conventionalComments.showButtons": {
           "type": "boolean",
           "default": true,
-          "markdownDescription": "Show an **Insert Label…** button next to the comment actions in PR review threads."
+          "markdownDescription": "Show the label and decoration buttons below comment boxes. Requires `\"enable-proposed-api\": [\"jbrulmans.conventional-comments-vscode\"]` in `argv.json` (run **Preferences: Configure Runtime Arguments**)."
         }
       }
     }
@@ -88,12 +504,17 @@
     "bundle": "esbuild src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node --target=node18",
     "compile": "npm run check-types && npm run bundle -- --sourcemap",
     "check-types": "tsc --noEmit",
-    "test": "tsc -p tsconfig.test.json && node --test \"out/test/**/*.test.js\"",
-    "package": "vsce package"
+    "test": "tsc -p tsconfig.test.json && node --test \"out/test/*.test.js\"",
+    "package": "vsce package",
+    "manifest": "node scripts/manifest.mjs",
+    "test:integration": "npm run compile && tsc -p tsconfig.json --outDir out && vscode-test"
   },
   "devDependencies": {
+    "@types/mocha": "^10.0.10",
     "@types/node": "^20.0.0",
     "@types/vscode": "~1.90.0",
+    "@vscode/test-cli": "^0.0.15",
+    "@vscode/test-electron": "^3.1.0",
     "@vscode/vsce": "^3.0.0",
     "esbuild": "^0.24.0",
     "typescript": "^5.6.0"
