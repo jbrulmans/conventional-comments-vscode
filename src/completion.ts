@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { COMMENT_SCHEME, Commands, rememberCommentDocument } from "./commands";
+import { Commands } from "./commands";
 import {
   Convention,
   DECORATIONS,
@@ -8,6 +8,8 @@ import {
   createBadgeUrl,
   parsePrefix,
 } from "./conventions";
+import { COMMENT_SCHEME } from "./target";
+import { isPrettified } from "./toolbar";
 
 function documentation(item: Convention, badgeUrl: string): vscode.MarkdownString {
   return new vscode.MarkdownString(`${item.desc}\n\n![${item.label}](${badgeUrl})`);
@@ -15,7 +17,7 @@ function documentation(item: Convention, badgeUrl: string): vscode.MarkdownStrin
 
 /**
  * Plays the role of the original toolbar inside comment input boxes:
- * - no prefix yet: offer labels at the start of the comment;
+ * - no prefix yet: offer labels at the start of the comment (also after `/`);
  * - cursor inside an existing prefix: offer decorations, other labels and removal.
  */
 export class ConventionalCommentsCompletionProvider
@@ -23,10 +25,10 @@ export class ConventionalCommentsCompletionProvider
 {
   provideCompletionItems(
     doc: vscode.TextDocument,
-    position: vscode.Position
+    position: vscode.Position,
+    _token: vscode.CancellationToken,
+    context: vscode.CompletionContext
   ): vscode.CompletionItem[] | undefined {
-    rememberCommentDocument(doc);
-
     const text = doc.getText();
     const offset = doc.offsetAt(position);
     const existing = parsePrefix(text);
@@ -34,7 +36,9 @@ export class ConventionalCommentsCompletionProvider
     if (!existing) {
       return this.labelInsertions(doc, text, offset, position);
     }
-    if (offset > existing.length) {
+    const triggeredBySlash =
+      context.triggerKind === vscode.CompletionTriggerKind.TriggerCharacter;
+    if (offset > existing.length || triggeredBySlash) {
       return undefined;
     }
     return this.prefixReplacements(doc, existing.label, existing.decoration, position);
@@ -46,14 +50,13 @@ export class ConventionalCommentsCompletionProvider
     offset: number,
     position: vscode.Position
   ): vscode.CompletionItem[] | undefined {
-    // Only at the very start of the comment, optionally after a partial word.
-    const typed = text.substring(0, offset).match(/^\s*([a-z-]*)$/i);
+    // Only at the very start of the comment, optionally after `/` and a partial word.
+    const typed = text.substring(0, offset).match(/^\s*(\/?[a-z-]*)$/i);
     if (!typed) return undefined;
 
+    const slash = typed[1].startsWith("/");
     const range = new vscode.Range(doc.positionAt(offset - typed[1].length), position);
-    const prettified = vscode.workspace
-      .getConfiguration("conventionalComments")
-      .get<boolean>("prettify", true);
+    const prettified = isPrettified(doc);
 
     return LABELS.map((l, i) => {
       const item = new vscode.CompletionItem(
@@ -62,6 +65,7 @@ export class ConventionalCommentsCompletionProvider
       );
       item.insertText = buildPrefix(l.label, undefined, prettified);
       item.range = range;
+      item.filterText = slash ? `/${l.label}` : l.label;
       item.sortText = String(i).padStart(2, "0");
       item.documentation = documentation(l, createBadgeUrl(l.label));
       // Second step: offer decorations right away, like the original toolbar.
@@ -143,6 +147,7 @@ export class ConventionalCommentsCompletionProvider
 export function registerCompletionProvider(): vscode.Disposable {
   return vscode.languages.registerCompletionItemProvider(
     { scheme: COMMENT_SCHEME },
-    new ConventionalCommentsCompletionProvider()
+    new ConventionalCommentsCompletionProvider(),
+    "/"
   );
 }
