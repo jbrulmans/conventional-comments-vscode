@@ -34,7 +34,10 @@ jobs:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
       - name: Publish to Open VSX
         if: github.event_name == 'push'
-        run: npm run publish:ovsx
+        # Creating the namespace fails harmlessly once it exists.
+        run: |
+          npx ovsx create-namespace jbrulmans || echo "Namespace jbrulmans already exists"
+          npm run publish:ovsx
         env:
           OVSX_PAT: ${{ secrets.OVSX_PAT }}
       - name: Create GitHub release
