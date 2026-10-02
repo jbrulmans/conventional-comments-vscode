@@ -41,8 +41,10 @@ describe("Conventional Comments", () => {
 
   it("does not suggest labels in the middle of a comment", async () => {
     const editor = await openComment("looks good /");
-    const labels = (await completions(editor, new vscode.Position(0, 12), "/")).map(labelOf);
-    assert.ok(!labels.includes("suggestion"), `got ${labels}`);
+    const items = await completions(editor, new vscode.Position(0, 12), "/");
+    // Only our items: VS Code's word suggestions may contain "suggestion" from other documents.
+    const ours = items.filter((i) => i.kind === vscode.CompletionItemKind.EnumMember).map(labelOf);
+    assert.deepEqual(ours, []);
   });
 
   it("sorts its items before other providers' (e.g. GitHub issues)", async () => {

@@ -36,12 +36,11 @@ describe("Suggest widget", () => {
     const doc = await vscode.workspace.openTextDocument({ language: "markdown", content: "" });
     await vscode.window.showTextDocument(doc);
 
-    // `/` opens the labels; praise, nitpick, suggestion, issue.
-    await run("type", { text: "/" });
+    // Open the labels on `/iss`, which leaves only issue. Filtering instead of
+    // moving through the list with selectNextSuggestion keeps this deterministic.
+    await run("type", { text: "/iss" });
+    await run("editor.action.triggerSuggest");
     await waitForWidget();
-    await run("selectNextSuggestion");
-    await run("selectNextSuggestion");
-    await run("selectNextSuggestion");
     await run("acceptSelectedSuggestion");
     await waitFor(
       () => doc.getText().startsWith(buildPrefix("issue", [], format)),
@@ -62,8 +61,8 @@ describe("Suggest widget", () => {
       // Picking another decoration replaces it.
       await run("editor.action.triggerSuggest");
       await waitForWidget();
-      await run("selectNextSuggestion"); // (blocking)
-      await run("selectNextSuggestion"); // (if-minor)
+      await run("type", { text: "if" });
+      await waitForWidget();
       await run("acceptSelectedSuggestion");
       await waitForText(doc, buildPrefix("issue", ["if-minor"], format));
 
