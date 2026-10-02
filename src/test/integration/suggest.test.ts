@@ -81,4 +81,25 @@ describe("Suggest widget", () => {
       await run("workbench.action.revertAndCloseActiveEditor");
     });
   }
+
+  it("keeps the label intact when typing to filter the decorations", async () => {
+    await vscode.workspace
+      .getConfiguration("conventionalComments")
+      .update("prettify", false, vscode.ConfigurationTarget.Global);
+    const doc = await vscode.workspace.openTextDocument({ language: "markdown", content: "suggestion: foo" });
+    const editor = await vscode.window.showTextDocument(doc);
+    const end = doc.positionAt("suggestion: ".length);
+    editor.selection = new vscode.Selection(end, end);
+
+    await run("editor.action.triggerSuggest");
+    await sleep(400);
+    await run("type", { text: "if" });
+    await sleep(400);
+    await run("acceptSelectedSuggestion");
+    await waitFor(
+      () => doc.getText() === "suggestion (if-minor): foo",
+      `suggestion (if-minor): foo, got ${JSON.stringify(doc.getText())}`
+    );
+    await run("workbench.action.revertAndCloseActiveEditor");
+  });
 });

@@ -104,7 +104,11 @@ describe("Conventional Comments", () => {
 
   it("sets one decoration at a time from suggestions", async () => {
     const editor = await openComment("suggestion: use a map");
-    const at = () => completions(editor, new vscode.Position(0, 0));
+    // Right after the label, e.g. after `suggestion (non-blocking): `.
+    const at = () => {
+      const text = editor.document.getText();
+      return completions(editor, editor.document.positionAt(text.indexOf(": ") + 2));
+    };
     const find = async (label: string) => (await at()).find((i) => labelOf(i) === label);
 
     await accept(editor, await find("(non-blocking)"));
@@ -148,6 +152,29 @@ describe("Conventional Comments", () => {
     await picking;
 
     assert.equal(editor.document.getText(), "suggestion (non-blocking): use a map here");
+  });
+
+  it("only offers label edits with the cursor right after the label", async () => {
+    const editor = await openComment("suggestion: foo");
+    const inside = (await completions(editor, new vscode.Position(0, 5))).map(labelOf);
+    assert.ok(!inside.includes("(non-blocking)"), `got ${inside}`);
+    const after = (await completions(editor, new vscode.Position(0, 12))).map(labelOf);
+    assert.ok(after.includes("(non-blocking)"), `got ${after}`);
+  });
+
+  it("remembers the format chosen through a suggestion", async () => {
+    const editor = await openComment("issue: x");
+    await run("conventionalComments.toggleFormat"); // badge, remembered for this comment
+    const badgeEnd = buildPrefix("issue", [], true).length;
+    const items = await completions(editor, editor.document.positionAt(badgeEnd));
+    await accept(editor, items.find((i) => labelOf(i) === "switch to plain text"));
+    assert.equal(editor.document.getText(), "issue: x");
+
+    await run("conventionalComments.removeLabel");
+    const praise = (await completions(editor, new vscode.Position(0, 0))).find(
+      (i) => labelOf(i) === "praise"
+    );
+    assert.equal(praise?.insertText, "praise: ");
   });
 
   it("removes the label from the palette", async () => {
