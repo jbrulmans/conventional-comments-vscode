@@ -1,7 +1,7 @@
 // Pre-publish checks, run by the release workflow:
 // - the pushed tag (if any) matches package.json's version
 // - CHANGELOG.md has a section for that version (written to release-notes.md)
-// - every relative image the README references exists (they're shown on the Marketplace)
+// - every image of this repo the README references exists (they're shown on the Marketplace)
 // Usage: node scripts/check-release.mjs [tag]
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 
@@ -21,9 +21,13 @@ if (section) {
   errors.push(`CHANGELOG.md has no "## ${version}" section.`);
 }
 
+// Images are linked as raw.githubusercontent.com URLs on main so they load on the
+// Marketplace; map those (and relative paths) back to files in the repo.
+const RAW_PREFIX = "https://raw.githubusercontent.com/jbrulmans/conventional-comments-vscode/main/";
 const readme = readFileSync("README.md", "utf8");
 for (const [, src] of readme.matchAll(/!\[[^\]]*\]\(([^)\s]+)\)/g)) {
-  if (!/^[a-z]+:/i.test(src) && !existsSync(src)) {
+  const local = src.startsWith(RAW_PREFIX) ? src.slice(RAW_PREFIX.length) : src;
+  if (!/^[a-z]+:/i.test(local) && !existsSync(local)) {
     errors.push(`README.md references missing image ${src}.`);
   }
 }

@@ -4,8 +4,6 @@ Label your pull request review comments in VS Code with [Conventional Comments](
 
 [![CI](https://github.com/jbrulmans/conventional-comments-vscode/actions/workflows/ci.yml/badge.svg)](https://github.com/jbrulmans/conventional-comments-vscode/actions/workflows/ci.yml)
 
-![Adding a label with the + button](images/demo-picker.gif)
-
 Conventional Comments make review feedback easier to read. Everyone sees at a glance whether a comment is praise, a question or a blocking issue. This extension adds the labels to the comment boxes of the [GitHub Pull Requests](https://marketplace.visualstudio.com/items?itemName=GitHub.vscode-pull-request-github) and [GitLab Workflow](https://marketplace.visualstudio.com/items?itemName=GitLab.gitlab-workflow) extensions, and to any other extension that uses VS Code's comments API.
 
 ## Features
@@ -18,7 +16,15 @@ Conventional Comments make review feedback easier to read. Everyone sees at a gl
 
 ## Usage
 
+### Type `/`
+
+![Picking a label and decoration with /](https://raw.githubusercontent.com/jbrulmans/conventional-comments-vscode/main/images/demo-slash.gif)
+
+Type `/` at the start of a comment and pick a label. The decorations open right after. Later, with the cursor right after the label, press <kbd>Ctrl</kbd>+<kbd>Space</kbd> to change the decoration or label, remove it, or switch the format.
+
 ### Add a label
+
+![Adding a label with the + button](https://raw.githubusercontent.com/jbrulmans/conventional-comments-vscode/main/images/demo-picker.gif)
 
 Click **+** in the header of a comment thread, or press <kbd>Cmd</kbd>+<kbd>Alt</kbd>+<kbd>C</kbd> (<kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>C</kbd> on Windows/Linux) inside a comment box.
 
@@ -27,15 +33,9 @@ Click **+** in the header of a comment thread, or press <kbd>Cmd</kbd>+<kbd>Alt<
 
 The label goes at the start of the comment, replacing any existing one: `suggestion (non-blocking): `.
 
-### Type `/`
-
-![Picking a label and decoration with /](images/demo-slash.gif)
-
-Type `/` at the start of a comment and pick a label. The decorations open right after. Later, with the cursor right after the label, press <kbd>Ctrl</kbd>+<kbd>Space</kbd> to change the decoration or label, remove it, or switch the format.
-
 ### Badge or plain text
 
-![Switching between badge and plain text](images/demo-format.gif)
+![Switching between badge and plain text](https://raw.githubusercontent.com/jbrulmans/conventional-comments-vscode/main/images/demo-format.gif)
 
 The second header button shows the comment's format: a tag icon for a badge, a text icon for plain text. Click it to switch. New labels use the `conventionalComments.defaultFormat` setting.
 
