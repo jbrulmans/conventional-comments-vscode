@@ -2,8 +2,8 @@ import * as vscode from "vscode";
 import { parsePrefix } from "./conventions";
 import { getTargetDocument, onDidChangeTarget } from "./target";
 
-// Exposes the state of the focused comment (label, decoration, format) as
-// context keys, which drive the checkmarks in the header menu.
+// Tracks whether each comment uses the badge or plain text format, and exposes
+// the focused comment's format as a context key for the header toggle icon.
 
 const prettifiedByUri = new Map<string, boolean>();
 
@@ -21,18 +21,15 @@ export function setPrettified(doc: vscode.TextDocument, prettified: boolean): vo
   updateContext();
 }
 
-export function updateContext(): void {
+function updateContext(): void {
   const doc = getTargetDocument();
-  const prefix = doc && parsePrefix(doc.getText());
-  const set = (key: string, value: unknown) =>
-    vscode.commands.executeCommand("setContext", `conventionalComments.${key}`, value);
-
-  set("label", prefix?.label ?? "");
-  set("decoration", prefix?.decoration ?? "");
-  set("prettified", doc ? isPrettified(doc) : true);
+  const prettified = doc
+    ? isPrettified(doc)
+    : vscode.workspace.getConfiguration("conventionalComments").get<boolean>("prettify", true);
+  vscode.commands.executeCommand("setContext", "conventionalComments.prettified", prettified);
 }
 
-export function registerToolbarState(): vscode.Disposable[] {
+export function registerFormatState(): vscode.Disposable[] {
   updateContext();
   return [
     onDidChangeTarget(updateContext),

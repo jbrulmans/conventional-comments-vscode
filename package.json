@@ -1,8 +1,8 @@
 {
   "name": "conventional-comments-vscode",
   "displayName": "Conventional Comments for PR Reviews",
-  "description": "Add Conventional Comments labels (praise, nitpick, suggestion, issue, ...) and decorations to pull request review comments in VS Code.",
-  "version": "0.3.0",
+  "description": "Conventional Comments (conventionalcomments.org) for pull request review comments in VS Code, as plain text or badges.",
+  "version": "0.4.0",
   "publisher": "jbrulmans",
   "license": "MIT",
   "icon": "images/icon.png",
@@ -26,7 +26,8 @@
     "pull request",
     "github",
     "gitlab",
-    "review comments"
+    "review comments",
+    "badges"
   ],
   "activationEvents": [
     "onStartupFinished"
@@ -36,12 +37,13 @@
     "commands": [
       {
         "command": "conventionalComments.insertLabel",
-        "title": "Insert Label",
-        "category": "Conventional Comments"
+        "title": "Add Label",
+        "category": "Conventional Comments",
+        "icon": "$(add)"
       },
       {
         "command": "conventionalComments.toggleFormat",
-        "title": "Toggle Badge / Plain Format",
+        "title": "Toggle Badge / Plain Text",
         "category": "Conventional Comments"
       },
       {
@@ -50,372 +52,46 @@
         "category": "Conventional Comments"
       },
       {
-        "command": "conventionalComments.menu.label.praise",
-        "title": "praise — Highlight something positive."
+        "command": "conventionalComments.configureKeybinding",
+        "title": "Change Keyboard Shortcut",
+        "category": "Conventional Comments"
       },
       {
-        "command": "conventionalComments.menu.labelSelected.praise",
-        "title": "✓ praise — Highlight something positive."
+        "command": "conventionalComments.header.badge",
+        "title": "Badge format (click for plain text)",
+        "icon": "$(tag)"
       },
       {
-        "command": "conventionalComments.menu.label.nitpick",
-        "title": "nitpick — Minor, non-blocking issues (style, naming...)."
-      },
-      {
-        "command": "conventionalComments.menu.labelSelected.nitpick",
-        "title": "✓ nitpick — Minor, non-blocking issues (style, naming...)."
-      },
-      {
-        "command": "conventionalComments.menu.label.suggestion",
-        "title": "suggestion — Suggest specific improvements."
-      },
-      {
-        "command": "conventionalComments.menu.labelSelected.suggestion",
-        "title": "✓ suggestion — Suggest specific improvements."
-      },
-      {
-        "command": "conventionalComments.menu.label.todo",
-        "title": "todo — Mark something that needs to be done."
-      },
-      {
-        "command": "conventionalComments.menu.labelSelected.todo",
-        "title": "✓ todo — Mark something that needs to be done."
-      },
-      {
-        "command": "conventionalComments.menu.label.issue",
-        "title": "issue — Point out a blocking problem."
-      },
-      {
-        "command": "conventionalComments.menu.labelSelected.issue",
-        "title": "✓ issue — Point out a blocking problem."
-      },
-      {
-        "command": "conventionalComments.menu.label.question",
-        "title": "question — Ask for clarification."
-      },
-      {
-        "command": "conventionalComments.menu.labelSelected.question",
-        "title": "✓ question — Ask for clarification."
-      },
-      {
-        "command": "conventionalComments.menu.label.thought",
-        "title": "thought — Share a reflection or idea."
-      },
-      {
-        "command": "conventionalComments.menu.labelSelected.thought",
-        "title": "✓ thought — Share a reflection or idea."
-      },
-      {
-        "command": "conventionalComments.menu.label.chore",
-        "title": "chore — Request a minor, non-code task."
-      },
-      {
-        "command": "conventionalComments.menu.labelSelected.chore",
-        "title": "✓ chore — Request a minor, non-code task."
-      },
-      {
-        "command": "conventionalComments.menu.decoration.non-blocking",
-        "title": "(non-blocking) — Optional change, doesn't block merge.",
-        "enablement": "conventionalComments.label"
-      },
-      {
-        "command": "conventionalComments.menu.decorationSelected.non-blocking",
-        "title": "✓ (non-blocking) — Optional change, doesn't block merge.",
-        "enablement": "conventionalComments.label"
-      },
-      {
-        "command": "conventionalComments.menu.decoration.blocking",
-        "title": "(blocking) — Must be addressed before merge.",
-        "enablement": "conventionalComments.label"
-      },
-      {
-        "command": "conventionalComments.menu.decorationSelected.blocking",
-        "title": "✓ (blocking) — Must be addressed before merge.",
-        "enablement": "conventionalComments.label"
-      },
-      {
-        "command": "conventionalComments.menu.decoration.if-minor",
-        "title": "(if-minor) — Address if the effort is small.",
-        "enablement": "conventionalComments.label"
-      },
-      {
-        "command": "conventionalComments.menu.decorationSelected.if-minor",
-        "title": "✓ (if-minor) — Address if the effort is small.",
-        "enablement": "conventionalComments.label"
-      },
-      {
-        "command": "conventionalComments.menu.format.badge",
-        "title": "Badge"
-      },
-      {
-        "command": "conventionalComments.menu.format.badgeSelected",
-        "title": "✓ Badge"
-      },
-      {
-        "command": "conventionalComments.menu.format.plain",
-        "title": "Plain text"
-      },
-      {
-        "command": "conventionalComments.menu.format.plainSelected",
-        "title": "✓ Plain text"
-      },
-      {
-        "command": "conventionalComments.menu.remove",
-        "title": "Remove label",
-        "enablement": "conventionalComments.label"
+        "command": "conventionalComments.header.plain",
+        "title": "Plain text format (click for badge)",
+        "icon": "$(symbol-text)"
       }
     ],
     "menus": {
       "comments/commentThread/title": [
         {
-          "submenu": "conventionalComments.menu",
+          "command": "conventionalComments.insertLabel",
           "group": "navigation@0",
-          "when": "config.conventionalComments.showHeaderMenu"
-        }
-      ],
-      "conventionalComments.menu": [
-        {
-          "command": "conventionalComments.menu.label.praise",
-          "group": "1_label@0",
-          "when": "conventionalComments.label != 'praise'"
+          "when": "config.conventionalComments.showHeaderButtons"
         },
         {
-          "command": "conventionalComments.menu.labelSelected.praise",
-          "group": "1_label@0",
-          "when": "conventionalComments.label == 'praise'"
+          "command": "conventionalComments.header.badge",
+          "group": "navigation@1",
+          "when": "config.conventionalComments.showHeaderButtons && conventionalComments.prettified"
         },
         {
-          "command": "conventionalComments.menu.label.nitpick",
-          "group": "1_label@1",
-          "when": "conventionalComments.label != 'nitpick'"
-        },
-        {
-          "command": "conventionalComments.menu.labelSelected.nitpick",
-          "group": "1_label@1",
-          "when": "conventionalComments.label == 'nitpick'"
-        },
-        {
-          "command": "conventionalComments.menu.label.suggestion",
-          "group": "1_label@2",
-          "when": "conventionalComments.label != 'suggestion'"
-        },
-        {
-          "command": "conventionalComments.menu.labelSelected.suggestion",
-          "group": "1_label@2",
-          "when": "conventionalComments.label == 'suggestion'"
-        },
-        {
-          "command": "conventionalComments.menu.label.todo",
-          "group": "1_label@3",
-          "when": "conventionalComments.label != 'todo'"
-        },
-        {
-          "command": "conventionalComments.menu.labelSelected.todo",
-          "group": "1_label@3",
-          "when": "conventionalComments.label == 'todo'"
-        },
-        {
-          "command": "conventionalComments.menu.label.issue",
-          "group": "1_label@4",
-          "when": "conventionalComments.label != 'issue'"
-        },
-        {
-          "command": "conventionalComments.menu.labelSelected.issue",
-          "group": "1_label@4",
-          "when": "conventionalComments.label == 'issue'"
-        },
-        {
-          "command": "conventionalComments.menu.label.question",
-          "group": "1_label@5",
-          "when": "conventionalComments.label != 'question'"
-        },
-        {
-          "command": "conventionalComments.menu.labelSelected.question",
-          "group": "1_label@5",
-          "when": "conventionalComments.label == 'question'"
-        },
-        {
-          "command": "conventionalComments.menu.label.thought",
-          "group": "1_label@6",
-          "when": "conventionalComments.label != 'thought'"
-        },
-        {
-          "command": "conventionalComments.menu.labelSelected.thought",
-          "group": "1_label@6",
-          "when": "conventionalComments.label == 'thought'"
-        },
-        {
-          "command": "conventionalComments.menu.label.chore",
-          "group": "1_label@7",
-          "when": "conventionalComments.label != 'chore'"
-        },
-        {
-          "command": "conventionalComments.menu.labelSelected.chore",
-          "group": "1_label@7",
-          "when": "conventionalComments.label == 'chore'"
-        },
-        {
-          "command": "conventionalComments.menu.decoration.non-blocking",
-          "group": "2_decoration@0",
-          "when": "conventionalComments.decoration != 'non-blocking'"
-        },
-        {
-          "command": "conventionalComments.menu.decorationSelected.non-blocking",
-          "group": "2_decoration@0",
-          "when": "conventionalComments.decoration == 'non-blocking'"
-        },
-        {
-          "command": "conventionalComments.menu.decoration.blocking",
-          "group": "2_decoration@1",
-          "when": "conventionalComments.decoration != 'blocking'"
-        },
-        {
-          "command": "conventionalComments.menu.decorationSelected.blocking",
-          "group": "2_decoration@1",
-          "when": "conventionalComments.decoration == 'blocking'"
-        },
-        {
-          "command": "conventionalComments.menu.decoration.if-minor",
-          "group": "2_decoration@2",
-          "when": "conventionalComments.decoration != 'if-minor'"
-        },
-        {
-          "command": "conventionalComments.menu.decorationSelected.if-minor",
-          "group": "2_decoration@2",
-          "when": "conventionalComments.decoration == 'if-minor'"
-        },
-        {
-          "command": "conventionalComments.menu.format.badge",
-          "group": "3_format@0",
-          "when": "!conventionalComments.prettified"
-        },
-        {
-          "command": "conventionalComments.menu.format.badgeSelected",
-          "group": "3_format@0",
-          "when": "conventionalComments.prettified"
-        },
-        {
-          "command": "conventionalComments.menu.format.plain",
-          "group": "3_format@1",
-          "when": "conventionalComments.prettified"
-        },
-        {
-          "command": "conventionalComments.menu.format.plainSelected",
-          "group": "3_format@1",
-          "when": "!conventionalComments.prettified"
-        },
-        {
-          "command": "conventionalComments.menu.remove",
-          "group": "4_remove"
+          "command": "conventionalComments.header.plain",
+          "group": "navigation@1",
+          "when": "config.conventionalComments.showHeaderButtons && !conventionalComments.prettified"
         }
       ],
       "commandPalette": [
         {
-          "command": "conventionalComments.menu.label.praise",
+          "command": "conventionalComments.header.badge",
           "when": "false"
         },
         {
-          "command": "conventionalComments.menu.labelSelected.praise",
-          "when": "false"
-        },
-        {
-          "command": "conventionalComments.menu.label.nitpick",
-          "when": "false"
-        },
-        {
-          "command": "conventionalComments.menu.labelSelected.nitpick",
-          "when": "false"
-        },
-        {
-          "command": "conventionalComments.menu.label.suggestion",
-          "when": "false"
-        },
-        {
-          "command": "conventionalComments.menu.labelSelected.suggestion",
-          "when": "false"
-        },
-        {
-          "command": "conventionalComments.menu.label.todo",
-          "when": "false"
-        },
-        {
-          "command": "conventionalComments.menu.labelSelected.todo",
-          "when": "false"
-        },
-        {
-          "command": "conventionalComments.menu.label.issue",
-          "when": "false"
-        },
-        {
-          "command": "conventionalComments.menu.labelSelected.issue",
-          "when": "false"
-        },
-        {
-          "command": "conventionalComments.menu.label.question",
-          "when": "false"
-        },
-        {
-          "command": "conventionalComments.menu.labelSelected.question",
-          "when": "false"
-        },
-        {
-          "command": "conventionalComments.menu.label.thought",
-          "when": "false"
-        },
-        {
-          "command": "conventionalComments.menu.labelSelected.thought",
-          "when": "false"
-        },
-        {
-          "command": "conventionalComments.menu.label.chore",
-          "when": "false"
-        },
-        {
-          "command": "conventionalComments.menu.labelSelected.chore",
-          "when": "false"
-        },
-        {
-          "command": "conventionalComments.menu.decoration.non-blocking",
-          "when": "false"
-        },
-        {
-          "command": "conventionalComments.menu.decorationSelected.non-blocking",
-          "when": "false"
-        },
-        {
-          "command": "conventionalComments.menu.decoration.blocking",
-          "when": "false"
-        },
-        {
-          "command": "conventionalComments.menu.decorationSelected.blocking",
-          "when": "false"
-        },
-        {
-          "command": "conventionalComments.menu.decoration.if-minor",
-          "when": "false"
-        },
-        {
-          "command": "conventionalComments.menu.decorationSelected.if-minor",
-          "when": "false"
-        },
-        {
-          "command": "conventionalComments.menu.format.badge",
-          "when": "false"
-        },
-        {
-          "command": "conventionalComments.menu.format.badgeSelected",
-          "when": "false"
-        },
-        {
-          "command": "conventionalComments.menu.format.plain",
-          "when": "false"
-        },
-        {
-          "command": "conventionalComments.menu.format.plainSelected",
-          "when": "false"
-        },
-        {
-          "command": "conventionalComments.menu.remove",
+          "command": "conventionalComments.header.plain",
           "when": "false"
         }
       ]
@@ -434,22 +110,15 @@
         "conventionalComments.prettify": {
           "type": "boolean",
           "default": true,
-          "markdownDescription": "Insert labels as shields.io badges (rendered on GitHub/GitLab) instead of plain text like `suggestion(non-blocking):`."
+          "markdownDescription": "Insert labels as shields.io badges (rendered on GitHub/GitLab) instead of plain text like `suggestion (non-blocking):`."
         },
-        "conventionalComments.showHeaderMenu": {
+        "conventionalComments.showHeaderButtons": {
           "type": "boolean",
           "default": true,
-          "markdownDescription": "Show the Conventional Comment menu (tag icon) in the header of PR review comment threads."
+          "markdownDescription": "Show the **Add Label** (+) and badge/plain text toggle buttons in the header of PR review comment threads."
         }
       }
-    },
-    "submenus": [
-      {
-        "id": "conventionalComments.menu",
-        "label": "Conventional Comment",
-        "icon": "$(tag)"
-      }
-    ]
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run check-types && npm run bundle -- --minify",
@@ -458,7 +127,6 @@
     "check-types": "tsc --noEmit",
     "test": "tsc -p tsconfig.test.json && node --test \"out/test/*.test.js\"",
     "package": "vsce package",
-    "manifest": "node scripts/manifest.mjs",
     "test:integration": "npm run compile && tsc -p tsconfig.json --outDir out && vscode-test"
   },
   "devDependencies": {

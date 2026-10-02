@@ -9,13 +9,13 @@ import {
   parsePrefix,
 } from "./conventions";
 import { COMMENT_SCHEME } from "./target";
-import { isPrettified } from "./toolbar";
+import { isPrettified } from "./format";
 
 // Other providers in comment boxes (e.g. GitHub issues, sorted "00000000",
 // "00000001", ...) are mixed into the same list. A leading space sorts before
 // any digit or letter, keeping our items on top.
-function sortKey(key: string | number): string {
-  return ` ${String(key).padStart(2, "0")}`;
+function sortKey(group: number, index = 0): string {
+  return ` ${group}${String(index).padStart(2, "0")}`;
 }
 
 function documentation(item: Convention, badgeUrl: string): vscode.MarkdownString {
@@ -23,7 +23,7 @@ function documentation(item: Convention, badgeUrl: string): vscode.MarkdownStrin
 }
 
 /**
- * Plays the role of the original toolbar inside comment input boxes:
+ * Label picker inside comment input boxes:
  * - no prefix yet: offer labels at the start of the comment (also after `/`);
  * - cursor inside an existing prefix: offer decorations, other labels and removal.
  */
@@ -48,7 +48,7 @@ export class ConventionalCommentsCompletionProvider
     if (offset > existing.length || triggeredBySlash) {
       return undefined;
     }
-    return this.prefixReplacements(doc, existing.label, existing.decoration, position);
+    return this.prefixReplacements(doc, existing.label, existing.decorations, position);
   }
 
   private labelInsertions(
@@ -70,13 +70,13 @@ export class ConventionalCommentsCompletionProvider
         { label: l.label, description: l.desc },
         vscode.CompletionItemKind.EnumMember
       );
-      item.insertText = buildPrefix(l.label, undefined, prettified);
+      item.insertText = buildPrefix(l.label, [], prettified);
       item.range = range;
       item.filterText = slash ? `/${l.label}` : l.label;
-      item.sortText = sortKey(i);
+      item.sortText = sortKey(l.expressive ? 1 : 0, i);
       item.preselect = i === 0;
       item.documentation = documentation(l, createBadgeUrl(l.label));
-      // Second step: offer decorations right away, like the original toolbar.
+      // Second step: offer decorations right away.
       item.command = { command: "editor.action.triggerSuggest", title: "" };
       return item;
     });
@@ -85,7 +85,7 @@ export class ConventionalCommentsCompletionProvider
   private prefixReplacements(
     doc: vscode.TextDocument,
     label: string,
-    decoration: string | undefined,
+    decorations: string[],
     position: vscode.Position
   ): vscode.CompletionItem[] {
     // The prefix may span lines (badge form), which a completion range cannot,
@@ -107,38 +107,41 @@ export class ConventionalCommentsCompletionProvider
       item.insertText = "";
       item.range = range;
       item.filterText = name;
-      item.sortText = sortKey(sort);
+      item.sortText = sort;
       item.command = command;
       items.push(item);
       return item;
     };
 
+    // One decoration at a time: picking one replaces the current one.
     DECORATIONS.forEach((d, i) => {
-      const selected = d.label === decoration;
+      const selected = decorations.includes(d.label);
       const item = make(
-        `(${d.label})`,
-        selected ? `remove decoration · ${d.desc}` : d.desc,
-        `0${i}`,
+        selected ? `remove (${d.label})` : `(${d.label})`,
+        d.desc,
+        sortKey(0, i),
         {
           command: Commands.applyPrefix,
           title: "",
           arguments: [uri, label, selected ? undefined : d.label],
         }
       );
-      item.documentation = documentation(d, createBadgeUrl(label, d.label));
+      item.documentation = documentation(d, createBadgeUrl(label, [d.label]));
       item.preselect = i === 0;
     });
 
+    // Changing the label keeps the decoration.
+    const decoration = decorations[0];
     LABELS.filter((l) => l.label !== label).forEach((l, i) => {
-      const item = make(l.label, `change label · ${l.desc}`, `1${i}`, {
+      const item = make(l.label, `change label · ${l.desc}`, sortKey(1, i), {
         command: Commands.applyPrefix,
         title: "",
-        arguments: [uri, l.label, undefined],
+        arguments: [uri, l.label, decoration],
       });
-      item.documentation = documentation(l, createBadgeUrl(l.label));
+      item.documentation = documentation(l, createBadgeUrl(l.label, decorations));
     });
 
-    make(`remove ${label}`, "Remove the conventional comment label.", "20", {
+    make(`remove ${label}`, "Remove the conventional comment label.", sortKey(2), {
       command: Commands.removeLabel,
       title: "",
       arguments: [uri],
@@ -147,7 +150,7 @@ export class ConventionalCommentsCompletionProvider
     make(
       prettified ? "switch to plain text" : "switch to badge",
       `Currently ${prettified ? "a badge" : "plain text"}.`,
-      "30",
+      sortKey(3),
       { command: Commands.setFormat, title: "", arguments: [uri, !prettified] }
     );
 
